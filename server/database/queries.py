@@ -45,7 +45,7 @@ def updateItem(tablename, itemDetails, id, connection):
 
 
 def getAllItems(tablename, connection):
-    cur = connection.cursor()
+    cur = connection.cursor(dictionary=True)
     getAllItemsQuery = "SELECT * from "+tablename
     items = cur.execute(getAllItemsQuery)
     return cur.fetchall()
@@ -55,7 +55,7 @@ def getItemById(tablename, id, connection):
     tableId = tablename + "_id"
     if tablename == "productmovement":
         tableId = "movement_id"
-    cur = connection.cursor()
+    cur = connection.cursor(dictionary=True)
     getItemByIdQuery = "SELECT * from " + tablename + " WHERE " + tableId + "=%s"
     cur.execute(getItemByIdQuery, [id])
     return cur.fetchone()

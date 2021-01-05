@@ -2,7 +2,7 @@ import database.queries as queries
 from database.connection import create_connection
 from flask import Flask, request, jsonify, render_template
 import sys
-
+import yaml
 
 # import custom functions
 sys.path.append("/server/database")
@@ -11,9 +11,12 @@ sys.path.append("/server/database")
 app = Flask(__name__, static_folder="../client/build/static",
             template_folder="../client/build")
 
+# load database configuration params
+db = yaml.full_load(open('db.yaml'))
+
 # Create Connection
 connection = create_connection(
-    "localhost", "root", "123456", "products_store_db")
+    db['mysql_host'], db['mysql_user'], db['mysql_password'], db['mysql_database'])
 
 # Vars declartion
 acceptedRequestMethods = ["GET", "POST", "PUT"]
