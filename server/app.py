@@ -1,15 +1,14 @@
 import database.queries as queries
 from database.connection import create_connection
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 import sys
 import yaml
 
 # import custom functions
 sys.path.append("/server/database")
 
-# Flask App initlization.
-app = Flask(__name__, static_folder="../client/build/static",
-            template_folder="../client/build")
+# Flask App initlization
+app = Flask(__name__)
 
 # load database configuration params
 db = yaml.full_load(open('db.yaml'))
@@ -27,11 +26,6 @@ vaildResources = {
 
 
 # Routing
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
 
 @app.route("/api/<string:resource>", methods=["GET", "POST"], defaults={'id': None})
 @app.route("/api/<string:resource>/<string:id>", methods=["GET", "PUT"])
@@ -68,4 +62,4 @@ def routing(resource, id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

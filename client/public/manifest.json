@@ -1,9 +1,9 @@
 {
   "short_name": "ERPMax Test",
-  "name": "Web app build based React and Flask",
+  "name": "Web app based on React and Flask",
   "icons": [
     {
-      "src": "../media/favicon.ico",
+      "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     }
