@@ -1,10 +1,11 @@
 import React from "react";
 import { MDBNavbar, MDBNavbarBrand, MDBNavbarNav, MDBNavItem, MDBNavLink, MDBIcon } from "mdbreact";
 
+// indigo
 const NavBar = (props) => {
     let { activeKey } = props;
     return (
-        <MDBNavbar color="indigo" dark expand="md">
+        <MDBNavbar color="blue" dark expand="md" fixed="top">
             <MDBNavbarBrand href="/">
                 <MDBIcon inverse fixed icon="store" /> <strong className="white-text">ERPMax Shop</strong>
             </MDBNavbarBrand>
