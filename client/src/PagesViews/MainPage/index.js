@@ -4,7 +4,8 @@ import NavBar from "../../Components/NavBar";
 import headerImage from "../../Images/header-image.jpg";
 import './main-page.css';
 
-const MainPage = () => {
+const MainPage = (props) => {
+    let { history } = props;
     return (
         <Fragment>
             <NavBar activeKey="1" />
@@ -14,10 +15,10 @@ const MainPage = () => {
                         <h2>ERPMax Shop</h2>
                         <h6>Web app to manage inventory of a list of products in respective warehouses </h6>
                     </div>
-                    <div className="BtnsDiv">
-                        <MDBBtn href="/product" color="blue">Products</MDBBtn>
+                    <div>
+                        <MDBBtn onClick={() => history.push("/product")} color="blue">Products</MDBBtn>
                         Or
-                        <MDBBtn href="/location" color="blue">Locations</MDBBtn>
+                        <MDBBtn onClick={() => history.push("/location")} color="blue">Locations</MDBBtn>
                     </div>
                 </MDBMask>
             </MDBView>
