@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
+import NavBar from "../../Components/NavBar";
 // import "./Location.css";
 
 const Location = () => {
@@ -14,8 +15,9 @@ const Location = () => {
 
     console.log(locations);
     return (
-        <div className="Location">
-        </div>
+        <Fragment>
+            <NavBar activeKey="3" />
+        </Fragment>
     );
 }
 

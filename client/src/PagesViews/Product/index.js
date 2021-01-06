@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
+import NavBar from "../../Components/NavBar";
 // import "./Product.css";
 
 const Product = () => {
@@ -14,8 +15,9 @@ const Product = () => {
 
     console.log(products);
     return (
-        <div className="Location">
-        </div>
+        <Fragment>
+            <NavBar activeKey="2" />
+        </Fragment>
     );
 }
 

@@ -1,11 +1,10 @@
 import React, { Fragment } from "react";
-import Header from "../../Components/Header";
+import NavBar from "../../Components/NavBar";
 
 const MainPage = () => {
     return (
         <Fragment>
-            <Header />
-            
+            <NavBar activeKey="1" />
         </Fragment>
     );
 }
