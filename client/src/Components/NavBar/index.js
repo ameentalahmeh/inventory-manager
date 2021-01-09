@@ -5,9 +5,9 @@ import { MDBNavbar, MDBNavbarBrand, MDBNavbarNav, MDBNavItem, MDBNavLink, MDBIco
 const NavBar = (props) => {
     let { activeKey } = props;
     return (
-        <MDBNavbar color="blue" dark expand="md" fixed="top">
+        <MDBNavbar color="blue" dark expand="md">
             <MDBNavbarBrand href="/">
-                <MDBIcon inverse fixed icon="store" /> <strong className="white-text">ERPMax Shop</strong>
+                <MDBIcon inverse fixed icon="store" /> <strong className="white-text">ERPMax</strong>
             </MDBNavbarBrand>
             <MDBNavbarNav left>
                 <MDBNavItem active={activeKey === "1"}>

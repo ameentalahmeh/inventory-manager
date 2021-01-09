@@ -1,15 +1,15 @@
-import uuid
 from flask import jsonify
 
 
-def addNewItem(tablename, itemDetails, connection):
+def addNewItem(tablename, itemDetails, itemsCount, connection):
+
     tableId = tablename + "_id"
     recordTag = tablename
     if tablename == "productmovement":
         tableId = "movement_id"
         recordTag = "Movement"
 
-    itemDetails[tableId] = tablename + "_" + uuid.uuid4().hex
+    itemDetails[tableId] = str(itemsCount)
 
     cur = connection.cursor()
 
@@ -21,7 +21,7 @@ def addNewItem(tablename, itemDetails, connection):
 
     cur.execute(insertQuery, insertQueryValues)
     connection.commit()
-    return jsonify({'Message': 'The ' + recordTag + ' has been added !!'}), 200
+    return jsonify({'Message': 'The ' + recordTag + ' has been added !!'}), 200,
 
 
 def updateItem(tablename, itemDetails, id, connection):
@@ -31,17 +31,22 @@ def updateItem(tablename, itemDetails, id, connection):
         tableId = "movement_id"
         recordTag = "Movement"
 
-    cur = connection.cursor()
+    try:
+        cur = connection.cursor()
 
-    updateQueryFields = '=%s,'.join(list(itemDetails.keys())) + "=%s"
-    updateQueryValues = list(itemDetails.values()) + [id]
+        updateQueryFields = '=%s,'.join(list(itemDetails.keys())) + "=%s"
+        updateQueryValues = list(itemDetails.values()) + [id]
 
-    updateQuery = "UPDATE " + tablename + " SET " + \
-        updateQueryFields + " WHERE " + tableId + "=%s"
+        updateQuery = "UPDATE " + tablename + " SET " + \
+            updateQueryFields + " WHERE " + tableId + "=%s"
 
-    cur.execute(updateQuery, updateQueryValues)
-    connection.commit()
-    return jsonify({'Message': 'The ' + recordTag + ' has been updated !!'}), 200
+        print(updateQuery, updateQueryValues)
+
+        cur.execute(updateQuery, updateQueryValues)
+        connection.commit()
+        return jsonify({'Message': 'The ' + recordTag + ' has been updated !!'}), 200
+    except Exception as e:
+        print(e)
 
 
 def getAllItems(tablename, connection):

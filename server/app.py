@@ -40,7 +40,8 @@ def routing(resource, id):
                 else:
                     return jsonify({"Message": "There is no stored data"}), 200
             elif resource in vaildResources['AddAndEdit'] and request.method == "POST" and id == None:
-                return queries.addNewItem(resource, request.json, connection)
+                items = queries.getAllItems(resource, connection)
+                return queries.addNewItem(resource, request.json, len(items)+1, connection)
             elif resource in vaildResources["AddAndEdit"] and request.method != "POST":
                 if id:
                     item = queries.getItemById(resource, id, connection)
@@ -58,8 +59,8 @@ def routing(resource, id):
         else:
             return jsonify({'Error': 'Unexpected HTTP Method'}), 502
     except Exception as e:
-        return jsonify({'error': str(e)}), 502
+        return jsonify({'Error': str(e)}), 502
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

@@ -1,3 +1,6 @@
+.view {
+    height: 92vh !important;
+}
 .DetailsDiv {
     display: flex;
     flex-direction: column;
