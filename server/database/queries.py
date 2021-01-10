@@ -3,50 +3,60 @@ from flask import jsonify
 
 def addNewItem(tablename, itemDetails, itemsCount, connection):
 
-    tableId = tablename + "_id"
-    recordTag = tablename
-    if tablename == "productmovement":
-        tableId = "movement_id"
-        recordTag = "Movement"
+    print(itemDetails['to_location'], itemDetails['from_location'])
+    try:
+        if len(list(itemDetails.keys())) <= 0:
+            return jsonify({'error': "There are missing requird fields!"})
+        elif itemDetails['to_location'] == '' and itemDetails['from_location'] == '':
+            return jsonify({"error": "You have to include source location or destination location at least!"})
+        else:
+            tableId = tablename + "_id"
+            recordTag = tablename
+            if tablename == "productmovement":
+                tableId = "movement_id"
+                recordTag = "Movement"
 
-    itemDetails[tableId] = str(itemsCount)
+            itemDetails[tableId] = str(itemsCount)
 
-    cur = connection.cursor()
+            cur = connection.cursor()
 
-    insertQueryFields = ','.join(list(itemDetails.keys()))
-    insertQueryFieldsIndexs = ','.join(['%s'] * len(itemDetails.keys()))
-    insertQueryValues = list(itemDetails.values())
-    insertQuery = "INSERT INTO " + tablename + \
-        "("+insertQueryFields+") VALUES (" + insertQueryFieldsIndexs + ")"
+            insertQueryFields = ','.join(list(itemDetails.keys()))
+            insertQueryFieldsIndexs = ','.join(['%s'] * len(itemDetails.keys()))
+            insertQueryValues = list(itemDetails.values())
+            insertQuery = "INSERT INTO " + tablename + \
+                "("+insertQueryFields+") VALUES (" + insertQueryFieldsIndexs + ")"
 
-    cur.execute(insertQuery, insertQueryValues)
-    connection.commit()
-    return jsonify({'Message': 'The ' + recordTag + ' has been added !!'}), 200,
+            cur.execute(insertQuery, insertQueryValues)
+            connection.commit()
+            return jsonify({'message': 'The ' + recordTag + ' has been added !!'}), 200,
+
+    except Exception as e:
+        print(e)
 
 
 def updateItem(tablename, itemDetails, id, connection):
-    tableId = tablename + "_id"
-    recordTag = tablename
-    if tablename == "productmovement":
-        tableId = "movement_id"
-        recordTag = "Movement"
+    if len(list(itemDetails.keys())) <= 0:
+        return jsonify({'error': "At least one field must be changed !"})
+    else:
+        tableId = tablename + "_id"
+        recordTag = tablename
+        if tablename == "productmovement":
+            tableId = "movement_id"
+            recordTag = "Movement"
+        try:
+            cur = connection.cursor()
 
-    try:
-        cur = connection.cursor()
+            updateQueryFields = '=%s,'.join(list(itemDetails.keys())) + "=%s"
+            updateQueryValues = list(itemDetails.values()) + [id]
 
-        updateQueryFields = '=%s,'.join(list(itemDetails.keys())) + "=%s"
-        updateQueryValues = list(itemDetails.values()) + [id]
+            updateQuery = "UPDATE " + tablename + " SET " + \
+                updateQueryFields + " WHERE " + tableId + "=%s"
 
-        updateQuery = "UPDATE " + tablename + " SET " + \
-            updateQueryFields + " WHERE " + tableId + "=%s"
-
-        print(updateQuery, updateQueryValues)
-
-        cur.execute(updateQuery, updateQueryValues)
-        connection.commit()
-        return jsonify({'Message': 'The ' + recordTag + ' has been updated !!'}), 200
-    except Exception as e:
-        print(e)
+            cur.execute(updateQuery, updateQueryValues)
+            connection.commit()
+            return jsonify({'message': 'The ' + recordTag + ' has been updated !!'}), 200
+        except Exception as e:
+            print(e)
 
 
 def getAllItems(tablename, connection):

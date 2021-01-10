@@ -2,25 +2,22 @@ import React, { useState, useEffect, Fragment } from "react";
 import axios from "axios";
 import moment from "moment";
 import {
-    MDBListGroup,
     MDBTypography,
-    MDBListGroupItem,
     MDBContainer,
     MDBTable,
     MDBTableHead,
     MDBTableBody,
     MDBBtn,
     MDBIcon,
-    MDBInput,
-    MDBModal,
-    MDBModalHeader,
-    MDBModalFooter,
-    MDBModalBody,
-    MDBInputGroup,
-    MDBLink
+    MDBLink,
+    MDBCloseIcon
 } from "mdbreact";
 import NavBar from "../../Components/NavBar";
+import List from "../../Components/List";
 import "./product.css";
+import Details from "../../Components/Details";
+import Popup from "../../Components/Popup";
+
 
 const Product = () => {
 
@@ -28,18 +25,19 @@ const Product = () => {
     const [productMovements, setProductMovements] = useState(null);
 
     const [selectedProduct, setSelectedProduct] = useState(null);
+
     const [selectedMovement, setSelectedMovement] = useState(null);
+    const [selectedMovementIndex, setSelectedMovementIndex] = useState(null);
 
     const [selectedPropertyIdx, setSelectedPropertyIdx] = useState(null);
     const [updatedProductProperty, setUpdatedProductProperty] = useState(null);
 
-    const [isUpdateModelOpen, setIsUpdateModelOpen] = useState(false);
-    const [isCreateModelOpen, setIsCreateModelOpen] = useState(false);
-    const [isCreateModelOpenByAddIcon, setIsCreateModelOpenByAddIcon] = useState(false);
+    const [createMovementModelOpen, setCreateMovementModelOpen] = useState(false);
+    const [updateMovementModelOpen, setUpdateMovementModelOpen] = useState(false);
+    const [isUpdateProductPropertyOpen, setIsUpdateProductPropertyOpen] = useState(false);
 
-    const [changeDate, setChangeDate] = useState(false);
     const [getDataError, setGetDataErrors] = useState(null);
-    const [, setUpdateRequestFeedback] = useState(null);
+    const [requestFeedback, setRequestFeedback] = useState(null);
 
     // Functions
 
@@ -48,16 +46,17 @@ const Product = () => {
     const getProductMovements = () => axios.get(`/api/productmovements`)
 
     const updateProductProperty = (propLabel) => {
+
         axios
-            .put(`/api/product/${selectedProduct.id}`, updatedProductProperty)
+            .put(`/api/product/${selectedProduct.product_id}`, updatedProductProperty)
             .then((response) => {
-                let { data, statusText } = response;
-                if (statusText === "OK") {
+                let { data } = response;
+                if (data && !data.error) {
                     selectedProduct[propLabel] = updatedProductProperty[propLabel];
                     setTimeout(() => {
                         setUpdatedProductProperty(null)
                         setSelectedPropertyIdx(null)
-                        setUpdateRequestFeedback(data.Message)
+                        setRequestFeedback(data.message)
                         setSelectedProduct(selectedProduct)
                         getProducts()
                             .then((fetchedProducts) => {
@@ -67,7 +66,7 @@ const Product = () => {
                     }, '100');
 
                 } else {
-                    setUpdateRequestFeedback(data.Error)
+                    setRequestFeedback({ "error": data.error })
                 }
 
             })
@@ -76,67 +75,76 @@ const Product = () => {
             })
     }
 
-    const updateMovementProperties = (updatedMovement) => {
+    const updateMovementProperties = (updatedMovement, movement_id) => {
 
-        let { movement_id } = updatedMovement;
-        delete updatedMovement['movement_id'];
-        delete updatedMovement['product_id'];
-        delete updatedMovement['firstMovementDate'];
+        if (updatedMovement && Object.keys(updatedMovement).length <= 0) {
+            setRequestFeedback({ "error": "No changes happened !" })
+        } else {
 
-        updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
+            if (updatedMovement['movement_timestamp']) {
+                updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
+            }
 
-        axios
-            .put(`/api/productmovement/${movement_id}`, updatedMovement)
-            .then((response) => {
-                let { data, statusText } = response;
-                if (statusText === "OK") {
-                    setTimeout(() => {
-                        setChangeDate(false)
-                        setSelectedMovement(null)
-                        setUpdateRequestFeedback(data.Message)
-                        getProductMovements()
-                            .then((fetchedProductMovements) => {
-                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
-                                setProductMovements(data)
-                            })
-                    }, '200');
-                } else {
-                    setUpdateRequestFeedback(data.Error)
-                }
+            axios
+                .put(`/api/productmovement/${movement_id}`, updatedMovement)
+                .then((response) => {
+                    let { data } = response;
+                    if (data && !data.error) {
+                        setTimeout(() => {
+                            setRequestFeedback(data.message)
+                            getProductMovements()
+                                .then((fetchedProductMovements) => {
+                                    let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
+                                    setProductMovements(data)
+                                })
+                        }, '200');
+                    } else {
+                        setRequestFeedback({ "error": data.error })
+                    }
 
-            })
-            .catch((err) => {
-                console.log(err.message);
-            })
+                })
+                .catch((err) => {
+                    console.log(err.message);
+                })
+        }
     }
 
     const addMovement = (createdMovement, product_id) => {
-        createdMovement['product_id'] = product_id;
-        createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
+
         console.log(createdMovement);
+        
+        if (createdMovement && (Object.keys(createdMovement).length <= 0 || !createdMovement['movement_timestamp'])) {
+            setRequestFeedback({ "error": "There are empty required fields!" })
 
-        axios
-            .post(`/api/productmovement`, createdMovement)
-            .then((response) => {
-                let { data, statusText } = response;
-                if (statusText === "OK") {
-                    setTimeout(() => {
+        } else if ((!createdMovement['to_location'] || createdMovement['to_location'] === '') && (!createdMovement['from_location'] || createdMovement['from_location'] === '')) {
+            setRequestFeedback({ "error": "You have to include source location or destination location at least!" })
+        } else {
 
-                        setUpdateRequestFeedback(data.Message)
-                        getProductMovements()
-                            .then((fetchedProductMovements) => {
-                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
-                                setProductMovements(data)
-                            })
-                    }, '200');
-                } else {
-                    setUpdateRequestFeedback(data.Error)
-                }
+            createdMovement['product_id'] = product_id;
+            createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
 
-            })
-            .catch((err) => {
-                console.log(err);
-            })
+            axios
+                .post(`/api/productmovement`, createdMovement)
+                .then((response) => {
+                    let { data } = response;
+                    if (data && !data.error) {
+                        setTimeout(() => {
+                            setRequestFeedback(data.message)
+                            getProductMovements()
+                                .then((fetchedProductMovements) => {
+                                    let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
+                                    setProductMovements(data)
+                                })
+                        }, '200');
+                    } else {
+                        setRequestFeedback({ "error": data.error })
+                    }
+
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        }
     }
 
     useEffect(() => {
@@ -160,35 +168,57 @@ const Product = () => {
 
 
     // Handlers 
-    const handleProductEditIconClick = (propIndex, propLabel) => {
-        setSelectedPropertyIdx(propIndex);
-        setUpdatedProductProperty({ [propLabel]: selectedProduct[propLabel] });
+
+    const handleMovementEditIconClick = (selectedMovement, Index) => {
+        setSelectedMovement(selectedMovement)
+        setSelectedMovementIndex(Index)
+        setUpdateMovementModelOpen(true)
+        setIsUpdateProductPropertyOpen(false)
+        setRequestFeedback(null)
+
     }
 
-    const handleMovementEditIconClick = (selectedMovement) => {
-        selectedMovement['firstMovementDate'] = selectedMovement['movement_timestamp'];
-        setSelectedMovement(selectedMovement);
-        setIsUpdateModelOpen(true);
+
+    const handleMovementCreateClick = () => {
+        setSelectedMovement(null)
+        setCreateMovementModelOpen(true)
+        setIsUpdateProductPropertyOpen(false)
+        setRequestFeedback(null)
     }
 
-    const handleMovementCreateconClick = () => {
-        setIsCreateModelOpen(true);
-    }
-
-    const createMovementIconAction = () => {
-        setIsCreateModelOpenByAddIcon(true);
-    }
 
     // Varaibles
     let product_name = selectedProduct ? selectedProduct.name : null;
-    let selectedProductMovements = productMovements && selectedProduct && productMovements.filter(productMovement => productMovement.product_id === selectedProduct.id)
+    let selectedProductMovements = productMovements && selectedProduct && productMovements.filter(productMovement => productMovement.product_id === selectedProduct.product_id)
     let productPropertiesLabels = { "name": "Name", "warehouse": "Warehouse", "qty": "Quantity" };
     let movementPropertiesLabels = { "Date": "movement_timestamp", "Source": "from_location", "Destination": "to_location", "Quantity": "qty" };
-    let newMovement = {};
+
+
+    if (requestFeedback && !requestFeedback['error']) {
+        setTimeout(() => {
+            setRequestFeedback(null)
+        }, '2000')
+    }
 
     return (
         <div>
             <NavBar activeKey="2" />
+
+            {
+                requestFeedback ?
+                    requestFeedback['error'] ?
+                        <div class="alert alert-danger">
+                            <strong> {requestFeedback['error']} </strong>
+                            <MDBCloseIcon onClick={() => setRequestFeedback(null)} />
+                        </div>
+                        :
+                        <div class="alert alert-success">
+                            <strong> {requestFeedback} </strong>
+                        </div>
+                    :
+                    null
+            }
+
             {
                 getDataError ?
                     <div> {getDataError} </div>
@@ -196,82 +226,33 @@ const Product = () => {
                     <MDBContainer className="mainContainer">
                         <MDBContainer className="subContainer">
                             <MDBTypography variant="h4-responsive" colorText="blue"> Products List:</MDBTypography>
-                            <MDBListGroup style={{ width: "90%" }}>
-                                {
-                                    products && products.map(({ product_id, name, warehouse, qty }, idx) => {
-                                        return (
-                                            <MDBListGroupItem
-                                                key={idx}
-                                                onClick={() => setSelectedProduct({
-                                                    id: product_id,
-                                                    name,
-                                                    warehouse,
-                                                    qty
-                                                })}
-                                                active={selectedProduct && selectedProduct.id === product_id}
-                                            >
-                                                {name}
-                                            </MDBListGroupItem>
-                                        )
-                                    })
-                                }
-                            </MDBListGroup>
+                            <List
+                                items={products}
+                                setSelectedItem={setSelectedProduct}
+                                selectedItem={selectedProduct}
+                                setSelectedPropertyIdx={setSelectedPropertyIdx}
+                                item_id="product_id"
+                                itemVal="name"
+                            />
                         </MDBContainer>
+
                         <div className="vl"></div>
+
                         <MDBContainer className="subContainer">
                             {
                                 selectedProduct ?
                                     <Fragment>
                                         <MDBTypography variant="h4-responsive" colorText="blue">{product_name} Product Details:</MDBTypography>
-                                        <MDBContainer className="subContainer">
-                                            {
-                                                Object.keys(selectedProduct).map((propLabel, idx) => {
-                                                    return (
-                                                        productPropertiesLabels[propLabel] ?
-                                                            <div key={idx} style={{ display: selectedPropertyIdx === idx ? "contents" : "inline-block" }}>
-                                                                <strong> {productPropertiesLabels[propLabel]}: </strong>
-                                                                {
-                                                                    selectedPropertyIdx === idx ?
-                                                                        <Fragment>
-                                                                            <div style={{ display: "flex", flexDirection: "row" }}>
-                                                                                <MDBInput
-                                                                                    type="text"
-                                                                                    valueDefault={selectedProduct[propLabel]}
-                                                                                    onChange={(e) => setUpdatedProductProperty({ [propLabel]: e.target.value })}
-                                                                                />
-                                                                                <MDBIcon
-                                                                                    className="updateConfirmIcon"
-                                                                                    size="1x"
-                                                                                    icon="check-circle"
-                                                                                    far
-                                                                                    onClick={() => updateProductProperty(propLabel)}
-                                                                                />
-                                                                                <MDBIcon
-                                                                                    className="updateCancelItcon"
-                                                                                    size="1x"
-                                                                                    icon="times-circle"
-                                                                                    far
-                                                                                    onClick={() => setSelectedPropertyIdx(null)}
-                                                                                />
-                                                                            </div>
 
-                                                                        </Fragment>
-                                                                        :
-                                                                        <Fragment>
-                                                                            {selectedProduct[propLabel]}  <MDBIcon
-                                                                                size="1x"
-                                                                                icon="edit"
-                                                                                onClick={() => handleProductEditIconClick(idx, propLabel)}
-                                                                            />
-                                                                        </Fragment>
-                                                                }
-                                                            </div>
-                                                            :
-                                                            null
-                                                    )
-                                                })
-                                            }
-                                        </MDBContainer>
+                                        <Details
+                                            selectedItem={selectedProduct}
+                                            itemPropertiesLabels={productPropertiesLabels}
+                                            selectedPropertyIdx={selectedPropertyIdx}
+                                            setSelectedPropertyIdx={setSelectedPropertyIdx}
+                                            setUpdatedItemProperty={setUpdatedProductProperty}
+                                            updateItemProperty={updateProductProperty}
+                                            setIsUpdateItemPropertyOpen={setIsUpdateProductPropertyOpen}
+                                        />
 
                                         <div className="line"></div>
 
@@ -280,8 +261,9 @@ const Product = () => {
                                                 <MDBContainer className="subContainer">
                                                     <div className="productMovementSectionTitle">
                                                         <p style={{ marginTop: "1rem" }}><strong>{product_name} Product Movements </strong>  ({selectedProductMovements.length} Movements) <strong>:</strong> </p>
-                                                        <MDBIcon onClick={() => setIsCreateModelOpenByAddIcon(true)} icon="plus" className="newMovmentIcon"> </MDBIcon>
+                                                        <MDBIcon onClick={() => handleMovementCreateClick()} icon="plus" className="newMovmentIcon"> </MDBIcon>
                                                     </div>
+
                                                     <MDBTable hover bordered>
                                                         <MDBTableHead color="primary-color" textWhite>
                                                             <tr>
@@ -300,7 +282,7 @@ const Product = () => {
                                                                     return (
                                                                         <tr key={idx}>
                                                                             <td>{idx + 1}</td>
-                                                                            <td>{new Date(movement_timestamp).toLocaleString()}</td>
+                                                                            <td>{new Date(movement_timestamp).toUTCString()}</td>
                                                                             <td>{from_location}</td>
                                                                             <td>{to_location}</td>
                                                                             <td>{qty}</td>
@@ -308,7 +290,7 @@ const Product = () => {
                                                                                 <MDBBtn
                                                                                     className="EditBtn"
                                                                                     color="blue"
-                                                                                    onClick={() => handleMovementEditIconClick(movement)}
+                                                                                    onClick={() => handleMovementEditIconClick(movement, idx)}
                                                                                 >
                                                                                     Edit
                                                                                 </MDBBtn>
@@ -320,103 +302,43 @@ const Product = () => {
                                                     </MDBTable>
 
                                                     {
-                                                        selectedMovement ?
-                                                            <MDBModal isOpen={isUpdateModelOpen} backdrop={true} centered>
-                                                                <MDBModalHeader toggle={() => setIsUpdateModelOpen()} titleClass="modelTitle" >Update {product_name} Movement (# {selectedMovement.movement_id})</MDBModalHeader>
-                                                                <MDBModalBody>
-                                                                    {
-                                                                        Object.keys(movementPropertiesLabels).map((mPropLabel, idx) => {
-
-                                                                            let inputType = changeDate && mPropLabel === "Date" ? 'datetime-local' : mPropLabel === 'Quantity' ? 'number' : 'text';
-                                                                            let currentInputValue = selectedMovement[movementPropertiesLabels[mPropLabel]];
-                                                                            let valueDefault = mPropLabel === "Date" ? moment(currentInputValue).format("YYYY-MM-DD hh:mm:ss") : currentInputValue;
-                                                                            let firstMovementDate = moment(selectedMovement['firstMovementDate']).format("YYYY-MM-DD hh:mm:ss");
-
-                                                                            return (
-                                                                                <MDBContainer key={idx}>
-                                                                                    <MDBInputGroup
-                                                                                        containerClassName="mb-3 flex"
-                                                                                        prepend={mPropLabel}
-                                                                                        type={inputType}
-                                                                                        valueDefault={valueDefault}
-                                                                                        onChange={(e) => selectedMovement[movementPropertiesLabels[mPropLabel]] = e.target.value}
-                                                                                        value={!changeDate && mPropLabel === "Date" ? firstMovementDate : undefined}
-                                                                                    />
-                                                                                    {
-                                                                                        mPropLabel === "Date" ?
-                                                                                            <MDBLink
-                                                                                                link={undefined}
-                                                                                                onClick={() => setChangeDate(!changeDate)}
-                                                                                                className="ChangeDateLink"> {!changeDate ? 'Change Date' : 'Cancel'}
-                                                                                            </MDBLink>
-                                                                                            :
-                                                                                            null
-                                                                                    }
-                                                                                    {
-                                                                                        mPropLabel === 'Destination' ?
-                                                                                            <MDBLink to='/location' target="_blank" className="BrowseLocationsLink"> Browse locations </MDBLink>
-                                                                                            :
-                                                                                            null
-                                                                                    }
-                                                                                </MDBContainer>
-                                                                            )
-                                                                        })
-                                                                    }
-
-                                                                </MDBModalBody>
-                                                                <MDBModalFooter>
-                                                                    <MDBBtn color="primary" onClick={() => updateMovementProperties(selectedMovement)}>Update</MDBBtn>
-                                                                </MDBModalFooter>
-                                                            </MDBModal>
+                                                        updateMovementModelOpen && selectedMovement ?
+                                                            <Popup
+                                                                title={`Update ${product_name} Movement (# ${selectedMovementIndex + 1})`}
+                                                                eventHandler={updateMovementProperties}
+                                                                handlerBtnValue="Update"
+                                                                itemPropertiesLabels={movementPropertiesLabels}
+                                                                isModelOpen={updateMovementModelOpen}
+                                                                setIsModelOpen={setUpdateMovementModelOpen}
+                                                                data={{ selectedMovement, requestFeedback }}
+                                                            />
                                                             :
                                                             null
                                                     }
+
 
                                                 </MDBContainer>
                                                 :
                                                 <Fragment>
                                                     <p style={{ color: "red" }}>
-                                                        <strong>{product_name} Product doesn't has movements. <MDBLink className="CreateMovementsLink" onClick={() => handleMovementCreateconClick()}> Create Movement </MDBLink></strong>
+                                                        <strong>{product_name} Product doesn't has movements. <MDBLink className="CreateMovementsLink" onClick={() => handleMovementCreateClick()}> Create Movement </MDBLink></strong>
                                                     </p>
-
-                                                    {
-                                                        isCreateModelOpenByAddIcon || (selectedProduct && isCreateModelOpen)?
-                                                            <MDBModal isOpen={isCreateModelOpen} backdrop={true} centered>
-                                                                <MDBModalHeader toggle={() => setIsCreateModelOpen(!isCreateModelOpen)} titleClass="modelTitle" >Create {product_name} Movement</MDBModalHeader>
-
-                                                                <MDBModalBody>
-                                                                    {
-                                                                        Object.keys(movementPropertiesLabels).map((mPropLabel, idx) => {
-                                                                            let inputType = mPropLabel === "Date" ? 'datetime-local' : mPropLabel === 'Quantity' ? 'number' : 'text';
-                                                                            return (
-                                                                                <MDBContainer key={idx}>
-                                                                                    <MDBInputGroup
-                                                                                        containerClassName="mb-3 flex"
-                                                                                        prepend={mPropLabel}
-                                                                                        type={inputType}
-                                                                                        onChange={(e) => newMovement[movementPropertiesLabels[mPropLabel]] = e.target.value}
-                                                                                    />
-                                                                                    {
-                                                                                        mPropLabel === 'Destination' ?
-                                                                                            <MDBLink to='/location' target="_blank" className="BrowseLocationsLink"> Browse locations </MDBLink>
-                                                                                            :
-                                                                                            null
-                                                                                    }
-                                                                                </MDBContainer>
-                                                                            )
-                                                                        })
-                                                                    }
-
-                                                                </MDBModalBody>
-
-                                                                <MDBModalFooter>
-                                                                    <MDBBtn color="primary" onClick={() => addMovement(newMovement, selectedProduct.id)}>Create</MDBBtn>
-                                                                </MDBModalFooter>
-                                                            </MDBModal>
-                                                            :
-                                                            null
-                                                    }
                                                 </Fragment>
+                                        }
+
+                                        {
+                                            createMovementModelOpen && selectedProduct ?
+                                                <Popup
+                                                    title={`Create ${product_name} Movement`}
+                                                    eventHandler={addMovement}
+                                                    handlerBtnValue="Create"
+                                                    itemPropertiesLabels={movementPropertiesLabels}
+                                                    isModelOpen={createMovementModelOpen}
+                                                    setIsModelOpen={setCreateMovementModelOpen}
+                                                    data={{ 'product_id': selectedProduct.product_id, requestFeedback }}
+                                                />
+                                                :
+                                                null
                                         }
 
                                     </Fragment>

@@ -24,7 +24,7 @@ CREATE TABLE productmovement (
     from_location TEXT NULL DEFAULT NULL,
     to_location TEXT NULL DEFAULT NULL,
     product_id VARCHAR(45) NOT NULL,
-    qty FLOAT NOT NULL,
+    qty FLOAT NOT NULL DEFAULT '0',
     PRIMARY KEY (movement_id),
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );

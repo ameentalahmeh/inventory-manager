@@ -91,3 +91,6 @@ table.table td, table.table th {
     color: #2196f3;
     cursor: pointer;
 }
+.modal-footer {
+    flex-direction: column;
+}
