@@ -17,7 +17,7 @@ const Popup = (props) => {
     const [changeDate, setChangeDate] = useState(false);
 
     let { title, eventHandler, handlerBtnValue, itemPropertiesLabels, isModelOpen, setIsModelOpen, data } = props;
-    let { selectedMovement, id, requestFeedback } = data;
+    let { updatedItem, id, requestFeedback } = data;
     let popupItem = {};
 
     if (requestFeedback && !requestFeedback['error']) {
@@ -33,19 +33,26 @@ const Popup = (props) => {
                 {
                     Object.keys(itemPropertiesLabels).map((propLabel, idx) => {
                         let inputType = propLabel === "Date" ? 'datetime-local' : propLabel === 'Quantity' ? 'number' : 'text';
-                        let currentInputValue = selectedMovement && selectedMovement[itemPropertiesLabels[propLabel]];
-                        let valueDefault = propLabel === "Date" ?  new Date(currentInputValue).toLocaleString('en-GB', { timeZone: 'UTC' }) : currentInputValue;
-                        // let valueDefault = propLabel === "Date" ? moment(currentInputValue).format("YYYY-MM-DD hh:mm:ss") : currentInputValue;
-                         
+                        let currentInputValue = updatedItem && updatedItem[itemPropertiesLabels[propLabel]];
+                        let valueDefault = propLabel === "Date" ? moment(currentInputValue).utc().format('YYYY/MM/DD HH:mm A') : currentInputValue;
+
+                        console.log(popupItem);
+
                         return (
                             <MDBContainer key={idx}>
-                                <MDBInputGroup
-                                    containerClassName="mb-3 flex"
-                                    prepend={propLabel}
-                                    type={handlerBtnValue === "Update" && !changeDate && propLabel === "Date" ? 'text' : inputType}
-                                    valueDefault={valueDefault}
-                                    onChange={(e) => (popupItem[itemPropertiesLabels[propLabel]] = e.target.value)}
-                                />
+                                {
+
+                                    <MDBInputGroup
+                                        containerClassName="mb-3 flex"
+                                        prepend={propLabel}
+                                        type={handlerBtnValue === "Update" && !changeDate && propLabel === "Date" ? 'text' : inputType}
+                                        valueDefault={valueDefault}
+                                        onChange={(e) => (popupItem[itemPropertiesLabels[propLabel]] = e.target.value)}
+                                        value={handlerBtnValue === "Update" && propLabel === "Date" ? changeDate ? undefined : valueDefault : undefined}
+                                    />
+
+                                }
+
                                 {
                                     handlerBtnValue === "Update" && propLabel === "Date" ?
                                         <MDBLink

@@ -68,7 +68,7 @@ def requestValidation(tablename, method, body, item):
 
             if len(emptyFields) > 0:
                 vaildationError = jsonify(
-                    {'error': "The (" + ','.join(list(emptyFields)) + ") field/s can't be empty!"})
+                    {'error': "The (" + ', '.join(list(emptyFields)).rstrip() + ") field/s can't be empty!"})
 
             # Source and Destination check.
             elif tablename == "productmovement":
@@ -85,14 +85,27 @@ def requestValidation(tablename, method, body, item):
                 from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
                     body['from_location'].strip())
 
-                if method == "POST" and (to_locationNotExistOrEmpty and from_locationNotExistOrEmpty):
+                # Both
+                to_locationExistAndNotEmpty = 'to_location' in requestBodyFields and bool(
+                    body['to_location'].strip())
+                from_locationExistAndNotEmpty = 'from_location' in requestBodyFields and bool(
+                    body['from_location'].strip())
+
+                if to_locationExistAndNotEmpty and from_locationExistAndNotEmpty and (body['to_location'].strip() == body['from_location'].strip()):
                     vaildationError = jsonify(
-                        {"error": "You have to enter at least one of source and destination locations !"})
+                        {"error": "The source and destination locations can't be have the same value !"})
+
+                elif method == "POST":
+                    if to_locationNotExistOrEmpty and from_locationNotExistOrEmpty:
+                        vaildationError = jsonify(
+                            {"error": "You have to enter at least one of source and destination locations !"})
 
                 elif method == "PUT":
 
                     to_locationInDataBase = item['to_location']
                     from_locationInDataBase = item['from_location']
+
+                    # Removing case
 
                     from_location_removing_with_no_to_locationInDataBase = (
                         not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
@@ -105,13 +118,25 @@ def requestValidation(tablename, method, body, item):
                     if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
                         vaildationError = jsonify(
                             {"error": "Not allowed update since it will remove both source and destination locations !"})
+                    
+                    # Similarity case
+                    to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase = to_locationExistAndNotEmpty and (body['to_location'] == item['from_location'])
+                    from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase = from_locationExistAndNotEmpty and (body['from_location'] == item['to_location'])
+                    
+                    if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
+                        vaildationError = jsonify(
+                            {"error": "Not allowed update since it will make both source and destination locations have a same value !"})
 
-        return vaildationError
     else:
         if method == "PUT":
-            return jsonify({"error": "No changes made !"})
+            vaildationError = jsonify({"error": "No changes made !"})
         elif method == "POST":
-            return jsonify({"error": "Missing request body !"})
+            if tablename == "location":
+                vaildationError = jsonify(
+                    {"error": "The (city) field/s can't be empty!"})
+            else:
+                vaildationError = jsonify({"error": "Missing request body !"})
+    return vaildationError
 
 
 # Routing

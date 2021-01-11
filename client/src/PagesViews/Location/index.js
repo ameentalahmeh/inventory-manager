@@ -31,6 +31,7 @@ const Location = () => {
 
     const [getDataError, setGetDataErrors] = useState(null);
     const [requestFeedback, setRequestFeedback] = useState(null);
+    const [isUpdateLocationProperityError, setIsUpdateLocationProperityError] = useState(null)
 
     // Functions
 
@@ -60,6 +61,7 @@ const Location = () => {
 
                 } else {
                     setRequestFeedback({ "error": data.error })
+                    setIsUpdateLocationProperityError(true)
                 }
 
             })
@@ -68,15 +70,12 @@ const Location = () => {
             })
     }
 
-    const addLocation = (createdLoction) => {
-
-        console.log(createdLoction);
+    const addLocation = (createdLocation) => {
 
         axios
-            .post(`/api/location`, createdLoction)
+            .post(`/api/location`, createdLocation)
             .then((response) => {
                 let { data } = response;
-                console.log(data);
                 if (data && !data.error) {
                     setTimeout(() => {
                         setRequestFeedback(data.message)
@@ -89,10 +88,9 @@ const Location = () => {
                 } else {
                     setRequestFeedback({ "error": data.error })
                 }
-
             })
             .catch((err) => {
-                console.log(err);
+                console.log(err.message);
             })
     }
 
@@ -117,7 +115,7 @@ const Location = () => {
 
             })
             .catch((err) => {
-                console.log(err);
+                console.log(err.message);
             })
     }
 
@@ -170,14 +168,16 @@ const Location = () => {
     return (
         <div>
             <NavBar activeKey="3" />
-
             {
                 requestFeedback ?
                     requestFeedback['error'] ?
-                        <div class="alert alert-danger">
-                            <strong> {requestFeedback['error']} </strong>
-                            <MDBCloseIcon onClick={() => setRequestFeedback(null)} />
-                        </div>
+                        isUpdateLocationProperityError ?
+                            <div class="alert alert-danger">
+                                <strong> {requestFeedback['error']} </strong>
+                                <MDBCloseIcon onClick={() => setRequestFeedback(null)} />
+                            </div>
+                            :
+                            null
                         :
                         <div class="alert alert-success">
                             <strong> {requestFeedback} </strong>
@@ -193,7 +193,7 @@ const Location = () => {
                     <MDBContainer className="mainContainer">
                         <MDBContainer className="subContainer">
                             <div className="locationsListSectionTitle">
-                                <MDBTypography variant="h4-responsive" colorText="blue"> Loctions List:</MDBTypography>
+                                <MDBTypography variant="h4-responsive" colorText="blue"> Locations List:</MDBTypography>
                                 <MDBIcon onClick={() => handleLocationCreateIconClick()} icon="plus" className="newLocationIcon"> </MDBIcon>
                             </div>
                             <List
@@ -237,6 +237,7 @@ const Location = () => {
                                             setSelectedPropertyIdx={setSelectedPropertyIdx}
                                             setUpdatedItemProperty={setUpdatedLocationProperty}
                                             updateItemProperty={updateLocationProperty}
+                                            setIsUpdateItemProperityError={setIsUpdateLocationProperityError}
                                         />
 
                                         <div className="line"></div>

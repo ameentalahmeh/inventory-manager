@@ -40,6 +40,7 @@ const Product = () => {
 
     const [getDataError, setGetDataErrors] = useState(null);
     const [requestFeedback, setRequestFeedback] = useState(null);
+    const [isUpdateProductProperityError, setIsUpdateProductProperityError] = useState(null)
 
     // Functions
 
@@ -69,6 +70,7 @@ const Product = () => {
 
                 } else {
                     setRequestFeedback({ "error": data.error })
+                    setIsUpdateProductProperityError(true)
                 }
 
             })
@@ -108,7 +110,7 @@ const Product = () => {
     const addMovement = (createdMovement, product_id) => {
 
         newMovment['product_id'] = product_id;
-        
+
         if (createdMovement['movement_timestamp']) {
             newMovment['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
         }
@@ -139,7 +141,7 @@ const Product = () => {
 
             })
             .catch((err) => {
-                console.log(err);
+                console.log(err.message);
             })
     }
 
@@ -170,9 +172,7 @@ const Product = () => {
         setSelectedMovementIndex(Index)
         setUpdateMovementModelOpen(true)
         setRequestFeedback(null)
-
     }
-
 
     const handleMovementCreateClick = () => {
         setSelectedMovement(null)
@@ -201,10 +201,13 @@ const Product = () => {
             {
                 requestFeedback ?
                     requestFeedback['error'] ?
-                        <div class="alert alert-danger">
-                            <strong> {requestFeedback['error']} </strong>
-                            <MDBCloseIcon onClick={() => setRequestFeedback(null)} />
-                        </div>
+                        isUpdateProductProperityError ?
+                            <div class="alert alert-danger">
+                                <strong> {requestFeedback['error']} </strong>
+                                <MDBCloseIcon onClick={() => setRequestFeedback(null)} />
+                            </div>
+                            :
+                            null
                         :
                         <div class="alert alert-success">
                             <strong> {requestFeedback} </strong>
@@ -245,6 +248,7 @@ const Product = () => {
                                             setSelectedPropertyIdx={setSelectedPropertyIdx}
                                             setUpdatedItemProperty={setUpdatedProductProperty}
                                             updateItemProperty={updateProductProperty}
+                                            setIsUpdateItemProperityError={setIsUpdateProductProperityError}
                                         />
 
                                         <div className="line"></div>
@@ -275,7 +279,7 @@ const Product = () => {
                                                                     return (
                                                                         <tr key={idx}>
                                                                             <td>{idx + 1}</td>
-                                                                            <td>{new Date(movement_timestamp).toLocaleString('en-GB', { timeZone: 'UTC' })}</td>
+                                                                            <td>{moment(movement_timestamp).utc().format('YYYY/MM/DD HH:mm A')}</td>
                                                                             <td>{from_location}</td>
                                                                             <td>{to_location}</td>
                                                                             <td>{qty}</td>
@@ -303,7 +307,7 @@ const Product = () => {
                                                                 itemPropertiesLabels={movementPropertiesLabels}
                                                                 isModelOpen={updateMovementModelOpen}
                                                                 setIsModelOpen={setUpdateMovementModelOpen}
-                                                                data={{ 'id': selectedMovement.movement_id, selectedMovement, requestFeedback }}
+                                                                data={{ 'id': selectedMovement.movement_id, updatedItem: selectedMovement, requestFeedback }}
                                                             />
                                                             :
                                                             null
