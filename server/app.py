@@ -25,75 +25,96 @@ vaildResources = {
 }
 
 
+# Request Validation
 def requestValidation(tablename, method, body, item):
-    global vaildationError
+    vaildationError = {}
 
     requiredFieldsByTableName = {
-        'product': ['name', 'warehouse', 'qty'],
+        'product': ['prod_location_id', 'name', 'warehouse', 'qty'],
         'location': ['city'],
-        'productmovement': ['movement_timestamp', 'qty']
+        'productmovement': ['product_id', 'movement_timestamp', 'qty']
     }
 
-    requestBodyFields = list(body.keys())
+    optionalFieldsByTableName = {
+        'productmovement': ['to_location', 'from_location']
+    }
 
-    # Empty Required Fields.
-    if len(list(body.keys())) <= 0:
-        vaildationError = jsonify(
-            {'error': "There are missing requird fields!"})
-    else:
-        emptyFields = []
-        for f in list(requiredFieldsByTableName[tablename]):
-            notExistOrEmpty = f not in requestBodyFields or not bool(
-                body[f].strip())
-            existAndEmpty = f in requestBodyFields and not bool(
-                body[f].strip())
+    if body:
+        requestBodyFields = list(body.keys())
 
-            if (notExistOrEmpty and method == "POST") or (existAndEmpty and method == "PUT"):
-                emptyFields.append(f)
+        # Check body fields
+        if tablename in optionalFieldsByTableName.keys():
+            validRequestBodyKeys = requiredFieldsByTableName[tablename] + \
+                optionalFieldsByTableName[tablename]
+        else:
+            validRequestBodyKeys = requiredFieldsByTableName[tablename]
 
-        if len(emptyFields) > 0:
+        diff = [x for x in requestBodyFields if x not in validRequestBodyKeys]
+
+        if diff:
             vaildationError = jsonify(
-                {'error': "The (" + ','.join(list(emptyFields)) + ") field/s can't be empty!"})
+                {"error": "The send request contains invalid fields which (" + ','.join(list(diff)) + ').'})
 
-    # Source and Destination check.
-    if tablename == "productmovement":
-        # Post rules
-        to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
-            body['to_location'].strip())
-        from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
-            body['from_location'].strip())
+        else:
+            emptyFields = []
+            for f in list(requiredFieldsByTableName[tablename]):
+                notExistOrEmpty = f not in requestBodyFields or not bool(
+                    body[f].strip())
+                existAndEmpty = f in requestBodyFields and not bool(
+                    body[f].strip())
 
-        # Put rules
-        to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
-            body['to_location'].strip())
-        from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
-            body['from_location'].strip())
+                if (notExistOrEmpty and method == "POST") or (existAndEmpty and method == "PUT"):
+                    emptyFields.append(f)
 
-        to_locationInDataBase = item['to_location']
-        from_locationInDataBase = item['from_location']
-
-        if method == "POST" and (to_locationNotExistOrEmpty and from_locationNotExistOrEmpty):
-            vaildationError = jsonify(
-                {"error": "You have to include source location or destination location at least!"})
-        elif method == "PUT":
-
-            from_location_removing_with_no_to_locationInDataBase = (
-                not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
-
-            to_location_removing_with_no_from_locationInDataBase = (
-                not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
-
-            removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
-
-            if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+            if len(emptyFields) > 0:
                 vaildationError = jsonify(
-                    {"error": "Bad updating which will remove both of source and destination locations of the movement"})
-    
-    return vaildationError
+                    {'error': "The (" + ','.join(list(emptyFields)) + ") field/s can't be empty!"})
+
+            # Source and Destination check.
+            elif tablename == "productmovement":
+
+                # Post rules
+                to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
+                    body['to_location'].strip())
+                from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
+                    body['from_location'].strip())
+
+                # Put rules
+                to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
+                    body['to_location'].strip())
+                from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
+                    body['from_location'].strip())
+
+                if method == "POST" and (to_locationNotExistOrEmpty and from_locationNotExistOrEmpty):
+                    vaildationError = jsonify(
+                        {"error": "You have to enter at least one of source and destination locations !"})
+
+                elif method == "PUT":
+
+                    to_locationInDataBase = item['to_location']
+                    from_locationInDataBase = item['from_location']
+
+                    from_location_removing_with_no_to_locationInDataBase = (
+                        not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
+
+                    to_location_removing_with_no_from_locationInDataBase = (
+                        not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
+
+                    removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
+
+                    if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+                        vaildationError = jsonify(
+                            {"error": "Not allowed update since it will remove both source and destination locations !"})
+
+        return vaildationError
+    else:
+        if method == "PUT":
+            return jsonify({"error": "No changes made !"})
+        elif method == "POST":
+            return jsonify({"error": "Missing request body !"})
+
 
 # Routing
-
-
 @ app.route("/api/<string:resource>", methods=["GET", "POST"], defaults={'id': None})
 @ app.route("/api/<string:resource>/<string:id>", methods=["GET", "PUT"])
 def routing(resource, id):
@@ -108,7 +129,8 @@ def routing(resource, id):
 
         elif resource in vaildResources['AddAndEdit'] and request.method == "POST" and id == None:
             items = queries.getAllItems(resource, connection)
-            vaildationError = requestValidation(resource, 'POST', request.json)
+            vaildationError = requestValidation(
+                resource, 'POST', request.json, None)
             if vaildationError:
                 return vaildationError
             else:

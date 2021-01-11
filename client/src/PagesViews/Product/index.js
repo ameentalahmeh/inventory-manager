@@ -33,6 +33,8 @@ const Product = () => {
     const [selectedPropertyIdx, setSelectedPropertyIdx] = useState(null);
     const [updatedProductProperty, setUpdatedProductProperty] = useState(null);
 
+    const [newMovment, setNewMovement] = useState({});
+
     const [createMovementModelOpen, setCreateMovementModelOpen] = useState(false);
     const [updateMovementModelOpen, setUpdateMovementModelOpen] = useState(false);
 
@@ -77,46 +79,49 @@ const Product = () => {
 
     const updateMovementProperties = (updatedMovement, movement_id) => {
 
-        console.log(updatedMovement);
-
-        if (updatedMovement && Object.keys(updatedMovement).length <= 0) {
-            setRequestFeedback({ "error": "No changes happened !" })
-        } else {
-
-            if (updatedMovement['movement_timestamp']) {
-                updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
-            }
-
-            axios
-                .put(`/api/productmovement/${movement_id}`, updatedMovement)
-                .then((response) => {
-                    let { data } = response;
-                    if (data && !data.error) {
-                        setTimeout(() => {
-                            setRequestFeedback(data.message)
-                            getProductMovements()
-                                .then((fetchedProductMovements) => {
-                                    let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
-                                    setProductMovements(data)
-                                })
-                        }, '200');
-                    } else {
-                        setRequestFeedback({ "error": data.error })
-                    }
-                })
-                .catch((err) => {
-                    console.log(err.message);
-                })
+        if (updatedMovement['movement_timestamp']) {
+            updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
         }
+
+        axios
+            .put(`/api/productmovement/${movement_id}`, updatedMovement)
+            .then((response) => {
+                let { data } = response;
+                if (data && !data.error) {
+                    setTimeout(() => {
+                        setRequestFeedback(data.message)
+                        getProductMovements()
+                            .then((fetchedProductMovements) => {
+                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
+                                setProductMovements(data)
+                            })
+                    }, '200');
+                } else {
+                    setRequestFeedback({ "error": data.error })
+                }
+            })
+            .catch((err) => {
+                console.log(err.message);
+            })
     }
 
     const addMovement = (createdMovement, product_id) => {
-        console.log(createdMovement);
-        createdMovement['product_id'] = product_id;
-        createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
+
+        newMovment['product_id'] = product_id;
+        
+        if (createdMovement['movement_timestamp']) {
+            newMovment['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
+        }
+
+        if (createdMovement) {
+            Object.keys(createdMovement).forEach(key => {
+                newMovment[key] = createdMovement[key];
+            })
+            setNewMovement(newMovment)
+        }
 
         axios
-            .post(`/api/productmovement`, createdMovement)
+            .post(`/api/productmovement`, newMovment)
             .then((response) => {
                 let { data } = response;
                 if (data && !data.error) {
@@ -171,6 +176,7 @@ const Product = () => {
 
     const handleMovementCreateClick = () => {
         setSelectedMovement(null)
+        setNewMovement({})
         setCreateMovementModelOpen(true)
         setRequestFeedback(null)
     }
@@ -269,7 +275,7 @@ const Product = () => {
                                                                     return (
                                                                         <tr key={idx}>
                                                                             <td>{idx + 1}</td>
-                                                                            <td>{new Date(movement_timestamp).toUTCString()}</td>
+                                                                            <td>{new Date(movement_timestamp).toLocaleString('en-GB', { timeZone: 'UTC' })}</td>
                                                                             <td>{from_location}</td>
                                                                             <td>{to_location}</td>
                                                                             <td>{qty}</td>
