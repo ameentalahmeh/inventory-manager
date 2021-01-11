@@ -34,9 +34,7 @@ const Popup = (props) => {
                     Object.keys(itemPropertiesLabels).map((propLabel, idx) => {
                         let inputType = propLabel === "Date" ? 'datetime-local' : propLabel === 'Quantity' ? 'number' : 'text';
                         let currentInputValue = updatedItem && updatedItem[itemPropertiesLabels[propLabel]];
-                        let valueDefault = propLabel === "Date" ? moment(currentInputValue).utc().format('YYYY/MM/DD HH:mm A') : currentInputValue;
-
-                        console.log(popupItem);
+                        let valueDefault = propLabel === "Date" ? moment(currentInputValue).utc().format('YYYY/MM/DD hh:mm A') : currentInputValue;
 
                         return (
                             <MDBContainer key={idx}>

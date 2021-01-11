@@ -53,7 +53,7 @@ def requestValidation(tablename, method, body, item):
 
         if diff:
             vaildationError = jsonify(
-                {"error": "The send request contains invalid fields which (" + ','.join(list(diff)) + ').'})
+                {"error": "The send request contains invalid fields which are (" + ','.join(list(diff)) + ').'})
 
         else:
             emptyFields = []
@@ -125,17 +125,13 @@ def requestValidation(tablename, method, body, item):
                     
                     if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
                         vaildationError = jsonify(
-                            {"error": "Not allowed update since it will make both source and destination locations have a same value !"})
+                            {"error": "Not allowed update since it will make both source and destination locations have the same value !"})
 
     else:
         if method == "PUT":
             vaildationError = jsonify({"error": "No changes made !"})
         elif method == "POST":
-            if tablename == "location":
-                vaildationError = jsonify(
-                    {"error": "The (city) field/s can't be empty!"})
-            else:
-                vaildationError = jsonify({"error": "Missing request body !"})
+            vaildationError = jsonify({"error": "Missing request body !"})
     return vaildationError
 
 

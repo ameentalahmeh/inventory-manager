@@ -82,7 +82,8 @@ const Product = () => {
     const updateMovementProperties = (updatedMovement, movement_id) => {
 
         if (updatedMovement['movement_timestamp']) {
-            updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
+            updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
+            console.log(updatedMovement['movement_timestamp']);
         }
 
         axios
@@ -112,7 +113,7 @@ const Product = () => {
         newMovment['product_id'] = product_id;
 
         if (createdMovement['movement_timestamp']) {
-            newMovment['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss")
+            newMovment['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD HH:mm:ss")
         }
 
         if (createdMovement) {
@@ -279,7 +280,7 @@ const Product = () => {
                                                                     return (
                                                                         <tr key={idx}>
                                                                             <td>{idx + 1}</td>
-                                                                            <td>{moment(movement_timestamp).utc().format('YYYY/MM/DD HH:mm A')}</td>
+                                                                            <td>{moment(movement_timestamp).utc().format('YYYY/MM/DD hh:mm A')}</td>
                                                                             <td>{from_location}</td>
                                                                             <td>{to_location}</td>
                                                                             <td>{qty}</td>

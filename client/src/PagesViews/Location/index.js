@@ -72,26 +72,30 @@ const Location = () => {
 
     const addLocation = (createdLocation) => {
 
-        axios
-            .post(`/api/location`, createdLocation)
-            .then((response) => {
-                let { data } = response;
-                if (data && !data.error) {
-                    setTimeout(() => {
-                        setRequestFeedback(data.message)
-                        getLocations()
-                            .then((fetchedLocations) => {
-                                let { data } = fetchedLocations && fetchedLocations.data && fetchedLocations.data;
-                                setLocations(data)
-                            })
-                    }, '200');
-                } else {
-                    setRequestFeedback({ "error": data.error })
-                }
-            })
-            .catch((err) => {
-                console.log(err.message);
-            })
+        if (Object.keys(createdLocation).length <= 0) {
+            setRequestFeedback({ "error": "The (city) field/s can't be empty!" })
+        } else {
+            axios
+                .post(`/api/location`, createdLocation)
+                .then((response) => {
+                    let { data } = response;
+                    if (data && !data.error) {
+                        setTimeout(() => {
+                            setRequestFeedback(data.message)
+                            getLocations()
+                                .then((fetchedLocations) => {
+                                    let { data } = fetchedLocations && fetchedLocations.data && fetchedLocations.data;
+                                    setLocations(data)
+                                })
+                        }, '200');
+                    } else {
+                        setRequestFeedback({ "error": data.error })
+                    }
+                })
+                .catch((err) => {
+                    console.log(err.message);
+                })
+        }
     }
 
     const addProduct = (createdProduct, prod_location_id) => {
@@ -251,7 +255,11 @@ const Location = () => {
                                                     </div>
 
                                                     <div>
-                                                        Here location Products appear
+
+
+
+
+
                                                     </div>
 
                                                     {
