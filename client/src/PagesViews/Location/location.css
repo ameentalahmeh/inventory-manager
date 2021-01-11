@@ -1,0 +1,18 @@
+.CreateProductsLink {
+    display: contents;
+}
+
+.locationProductsSectionTitle, .locationsListSectionTitle {
+    width: 100%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.newLocationIcon, .newProductIcon {
+    color: #2196f3;
+    cursor: pointer;
+}
+.newLocationIcon {
+    margin-right: 10%;
+}

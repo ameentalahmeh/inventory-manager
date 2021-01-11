@@ -14,10 +14,11 @@ import {
 } from "mdbreact";
 import NavBar from "../../Components/NavBar";
 import List from "../../Components/List";
-import "./product.css";
 import Details from "../../Components/Details";
 import Popup from "../../Components/Popup";
 
+import "../../Style/shared-style.css";
+import "./product.css";
 
 const Product = () => {
 
@@ -34,7 +35,6 @@ const Product = () => {
 
     const [createMovementModelOpen, setCreateMovementModelOpen] = useState(false);
     const [updateMovementModelOpen, setUpdateMovementModelOpen] = useState(false);
-    const [isUpdateProductPropertyOpen, setIsUpdateProductPropertyOpen] = useState(false);
 
     const [getDataError, setGetDataErrors] = useState(null);
     const [requestFeedback, setRequestFeedback] = useState(null);
@@ -77,6 +77,8 @@ const Product = () => {
 
     const updateMovementProperties = (updatedMovement, movement_id) => {
 
+        console.log(updatedMovement);
+
         if (updatedMovement && Object.keys(updatedMovement).length <= 0) {
             setRequestFeedback({ "error": "No changes happened !" })
         } else {
@@ -101,7 +103,6 @@ const Product = () => {
                     } else {
                         setRequestFeedback({ "error": data.error })
                     }
-
                 })
                 .catch((err) => {
                     console.log(err.message);
@@ -110,41 +111,31 @@ const Product = () => {
     }
 
     const addMovement = (createdMovement, product_id) => {
-
         console.log(createdMovement);
-        
-        if (createdMovement && (Object.keys(createdMovement).length <= 0 || !createdMovement['movement_timestamp'])) {
-            setRequestFeedback({ "error": "There are empty required fields!" })
+        createdMovement['product_id'] = product_id;
+        createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
 
-        } else if ((!createdMovement['to_location'] || createdMovement['to_location'] === '') && (!createdMovement['from_location'] || createdMovement['from_location'] === '')) {
-            setRequestFeedback({ "error": "You have to include source location or destination location at least!" })
-        } else {
+        axios
+            .post(`/api/productmovement`, createdMovement)
+            .then((response) => {
+                let { data } = response;
+                if (data && !data.error) {
+                    setTimeout(() => {
+                        setRequestFeedback(data.message)
+                        getProductMovements()
+                            .then((fetchedProductMovements) => {
+                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
+                                setProductMovements(data)
+                            })
+                    }, '200');
+                } else {
+                    setRequestFeedback({ "error": data.error })
+                }
 
-            createdMovement['product_id'] = product_id;
-            createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD hh:mm:ss");
-
-            axios
-                .post(`/api/productmovement`, createdMovement)
-                .then((response) => {
-                    let { data } = response;
-                    if (data && !data.error) {
-                        setTimeout(() => {
-                            setRequestFeedback(data.message)
-                            getProductMovements()
-                                .then((fetchedProductMovements) => {
-                                    let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
-                                    setProductMovements(data)
-                                })
-                        }, '200');
-                    } else {
-                        setRequestFeedback({ "error": data.error })
-                    }
-
-                })
-                .catch((err) => {
-                    console.log(err);
-                })
-        }
+            })
+            .catch((err) => {
+                console.log(err);
+            })
     }
 
     useEffect(() => {
@@ -173,7 +164,6 @@ const Product = () => {
         setSelectedMovement(selectedMovement)
         setSelectedMovementIndex(Index)
         setUpdateMovementModelOpen(true)
-        setIsUpdateProductPropertyOpen(false)
         setRequestFeedback(null)
 
     }
@@ -182,7 +172,6 @@ const Product = () => {
     const handleMovementCreateClick = () => {
         setSelectedMovement(null)
         setCreateMovementModelOpen(true)
-        setIsUpdateProductPropertyOpen(false)
         setRequestFeedback(null)
     }
 
@@ -192,7 +181,6 @@ const Product = () => {
     let selectedProductMovements = productMovements && selectedProduct && productMovements.filter(productMovement => productMovement.product_id === selectedProduct.product_id)
     let productPropertiesLabels = { "name": "Name", "warehouse": "Warehouse", "qty": "Quantity" };
     let movementPropertiesLabels = { "Date": "movement_timestamp", "Source": "from_location", "Destination": "to_location", "Quantity": "qty" };
-
 
     if (requestFeedback && !requestFeedback['error']) {
         setTimeout(() => {
@@ -251,7 +239,6 @@ const Product = () => {
                                             setSelectedPropertyIdx={setSelectedPropertyIdx}
                                             setUpdatedItemProperty={setUpdatedProductProperty}
                                             updateItemProperty={updateProductProperty}
-                                            setIsUpdateItemPropertyOpen={setIsUpdateProductPropertyOpen}
                                         />
 
                                         <div className="line"></div>
@@ -310,7 +297,7 @@ const Product = () => {
                                                                 itemPropertiesLabels={movementPropertiesLabels}
                                                                 isModelOpen={updateMovementModelOpen}
                                                                 setIsModelOpen={setUpdateMovementModelOpen}
-                                                                data={{ selectedMovement, requestFeedback }}
+                                                                data={{ 'id': selectedMovement.movement_id, selectedMovement, requestFeedback }}
                                                             />
                                                             :
                                                             null
@@ -335,7 +322,7 @@ const Product = () => {
                                                     itemPropertiesLabels={movementPropertiesLabels}
                                                     isModelOpen={createMovementModelOpen}
                                                     setIsModelOpen={setCreateMovementModelOpen}
-                                                    data={{ 'product_id': selectedProduct.product_id, requestFeedback }}
+                                                    data={{ 'id': selectedProduct.product_id, requestFeedback }}
                                                 />
                                                 :
                                                 null
@@ -353,3 +340,13 @@ const Product = () => {
 }
 
 export default Product;
+
+
+// if (createdMovement && (Object.keys(createdMovement).length <= 0 || !createdMovement['movement_timestamp'] || !createdMovement['qty'])) {
+//     setRequestFeedback({ "error": "There are empty required fields!" })
+
+// } else if ((!createdMovement['to_location'] || createdMovement['to_location'] === '') && (!createdMovement['from_location'] || createdMovement['from_location'] === '')) {
+//     setRequestFeedback({ "error": "You have to include source location or destination location at least!" })
+// } else {
+
+// }

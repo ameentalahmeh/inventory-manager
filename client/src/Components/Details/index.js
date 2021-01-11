@@ -10,12 +10,10 @@ const Details = (props) => {
         selectedPropertyIdx,
         setSelectedPropertyIdx,
         setUpdatedItemProperty,
-        updateItemProperty,
-        setIsUpdateItemPropertyOpen } = props;
+        updateItemProperty } = props;
 
 
     const handleItemEditIconClick = (propIndex, propLabel) => {
-        setIsUpdateItemPropertyOpen(true)
         setSelectedPropertyIdx(propIndex);
         setUpdatedItemProperty({ [propLabel]: selectedItem[propLabel] });
     }

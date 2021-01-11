@@ -17,8 +17,7 @@ const Popup = (props) => {
     const [changeDate, setChangeDate] = useState(false);
 
     let { title, eventHandler, handlerBtnValue, itemPropertiesLabels, isModelOpen, setIsModelOpen, data } = props;
-    let { selectedMovement, product_id, requestFeedback } = data;
-    let id = handlerBtnValue === "Create" ? product_id : selectedMovement.movement_id;
+    let { selectedMovement, id, requestFeedback } = data;
     let popupItem = {};
 
     if (requestFeedback && !requestFeedback['error']) {
@@ -71,7 +70,7 @@ const Popup = (props) => {
 
             <MDBModalFooter>
                 <MDBBtn color="primary" onClick={() => eventHandler(popupItem, id)}>{handlerBtnValue}</MDBBtn>
-                <MDBTypography colorText="red"  > {requestFeedback && requestFeedback['error'] ? requestFeedback['error'] : null} </MDBTypography>
+                <MDBTypography colorText="red"> {requestFeedback && requestFeedback['error'] ? requestFeedback['error'] : null} </MDBTypography>
             </MDBModalFooter>
         </MDBModal>
     )

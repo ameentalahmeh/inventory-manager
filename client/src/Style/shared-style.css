@@ -1,0 +1,58 @@
+.mainContainer {
+    display: flex;
+    flex-direction: row;
+    margin-top: 5%;
+    margin-left: 3%;
+    padding: 0;
+}
+
+.subContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+}
+
+.list-group-item {
+    cursor: pointer;
+}
+
+.list-group-item.active {
+    background-color: #2196f3;
+    border-color: #2196f3;
+}
+
+.vl {
+    border-left: 3px solid #2196f3;
+    height: auto;
+  }
+
+.line {
+   width: 100%;
+   border: 0.2px solid lightgray; 
+   margin: 5% 0; 
+}
+
+.md-form {    
+    margin-top: auto;
+}
+
+.modal-footer {
+    justify-content: center;
+}
+
+.modelTitle {
+    color: #2196f3;
+    font-size: x-large;
+}
+
+.form-control {
+    padding: auto;
+}
+
+.input-group-text {
+    width: 7vw;
+}
+
+.modal-footer {
+    flex-direction: column;
+}
