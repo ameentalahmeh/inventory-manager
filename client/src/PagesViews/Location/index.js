@@ -4,7 +4,6 @@ import {
     MDBTypography,
     MDBContainer,
     MDBIcon,
-    MDBLink,
     MDBCloseIcon
 } from "mdbreact";
 import NavBar from "../../Components/NavBar";
@@ -13,12 +12,10 @@ import Details from "../../Components/Details";
 import Popup from "../../Components/Popup";
 
 import "../../Style/shared-style.css";
-import "./location.css";
 
 
 const Location = () => {
 
-    const [products, setProducts] = useState(null);
     const [locations, setLocations] = useState(null);
 
     const [selectedLocation, setSelectedLocation] = useState(null);
@@ -26,7 +23,6 @@ const Location = () => {
     const [selectedPropertyIdx, setSelectedPropertyIdx] = useState(null);
     const [updatedLocationProperty, setUpdatedLocationProperty] = useState(null);
 
-    const [createProductModelOpen, setCreateProductModelOpen] = useState(false);
     const [createLocationModelOpen, setCreateLocationModelOpen] = useState(false);
 
     const [getDataError, setGetDataErrors] = useState(null);
@@ -35,9 +31,35 @@ const Location = () => {
 
     // Functions
 
-    const getProducts = () => axios.get(`/api/products`)
-
     const getLocations = () => axios.get(`/api/locations`)
+
+    const addLocation = (createdLocation) => {
+
+        if (Object.keys(createdLocation).length <= 0) {
+            setRequestFeedback({ "error": "The (city) field can't be empty!" })
+        } else {
+            axios
+                .post(`/api/location`, createdLocation)
+                .then((response) => {
+                    let { data } = response;
+                    if (data && !data.error) {
+                        setTimeout(() => {
+                            setRequestFeedback(data.message)
+                            getLocations()
+                                .then((fetchedLocations) => {
+                                    let { data } = fetchedLocations && fetchedLocations.data && fetchedLocations.data;
+                                    setLocations(data)
+                                })
+                        }, '200');
+                    } else {
+                        setRequestFeedback({ "error": data.error })
+                    }
+                })
+                .catch((err) => {
+                    console.log(err.message);
+                })
+        }
+    }
 
     const updateLocationProperty = (propLabel) => {
 
@@ -70,72 +92,12 @@ const Location = () => {
             })
     }
 
-    const addLocation = (createdLocation) => {
-
-        if (Object.keys(createdLocation).length <= 0) {
-            setRequestFeedback({ "error": "The (city) field/s can't be empty!" })
-        } else {
-            axios
-                .post(`/api/location`, createdLocation)
-                .then((response) => {
-                    let { data } = response;
-                    if (data && !data.error) {
-                        setTimeout(() => {
-                            setRequestFeedback(data.message)
-                            getLocations()
-                                .then((fetchedLocations) => {
-                                    let { data } = fetchedLocations && fetchedLocations.data && fetchedLocations.data;
-                                    setLocations(data)
-                                })
-                        }, '200');
-                    } else {
-                        setRequestFeedback({ "error": data.error })
-                    }
-                })
-                .catch((err) => {
-                    console.log(err.message);
-                })
-        }
-    }
-
-    const addProduct = (createdProduct, prod_location_id) => {
-        createdProduct['prod_location_id'] = prod_location_id;
-        axios
-            .post(`/api/product`, createdProduct)
-            .then((response) => {
-                let { data } = response;
-                if (data && !data.error) {
-                    setTimeout(() => {
-                        setRequestFeedback(data.message)
-                        getProducts()
-                            .then((fetchedProducts) => {
-                                let { data } = fetchedProducts && fetchedProducts.data && fetchedProducts.data;
-                                setProducts(data)
-                            })
-                    }, '200');
-                } else {
-                    setRequestFeedback({ "error": data.error })
-                }
-
-            })
-            .catch((err) => {
-                console.log(err.message);
-            })
-    }
-
     useEffect(() => {
         try {
             getLocations()
                 .then((fetchedLocations) => {
                     let { data } = fetchedLocations && fetchedLocations.data && fetchedLocations.data;
                     setLocations(data)
-                })
-                .then(() => {
-                    getProducts()
-                        .then((fetchedProducts) => {
-                            let { data } = fetchedProducts && fetchedProducts.data && fetchedProducts.data;
-                            setProducts(data)
-                        })
                 })
         } catch (error) {
             setGetDataErrors(error.message)
@@ -150,17 +112,10 @@ const Location = () => {
         setRequestFeedback(null)
     }
 
-    const handleProductCreateIconClick = () => {
-        setCreateProductModelOpen(true)
-        setRequestFeedback(null)
-    }
-
 
     // Varaibles
     let location_city = selectedLocation ? selectedLocation.city : null;
-    let selectedLocationProducts = products && selectedLocation && products.filter(product => product.prod_location_id === selectedLocation.location_id)
     let locationPropertiesLabels = { "city": "City" };
-    let productPropertiesLabels = { "Name": "name", "Warehouse": "warehouse", "Quantity": "qty" };
 
 
     if (requestFeedback && !requestFeedback['error']) {
@@ -196,9 +151,9 @@ const Location = () => {
                     :
                     <MDBContainer className="mainContainer">
                         <MDBContainer className="subContainer">
-                            <div className="locationsListSectionTitle">
+                            <div className="ItemsSectionTitle">
                                 <MDBTypography variant="h4-responsive" colorText="blue"> Locations List:</MDBTypography>
-                                <MDBIcon onClick={() => handleLocationCreateIconClick()} icon="plus" className="newLocationIcon"> </MDBIcon>
+                                <MDBIcon onClick={() => handleLocationCreateIconClick()} icon="plus" className="newItemIcon"> </MDBIcon>
                             </div>
                             <List
                                 items={locations}
@@ -243,49 +198,6 @@ const Location = () => {
                                             updateItemProperty={updateLocationProperty}
                                             setIsUpdateItemProperityError={setIsUpdateLocationProperityError}
                                         />
-
-                                        <div className="line"></div>
-
-                                        {
-                                            selectedLocationProducts && selectedLocationProducts.length > 0 ?
-                                                <MDBContainer className="subContainer">
-                                                    <div className="locationProductsSectionTitle">
-                                                        <p style={{ marginTop: "1rem" }}><strong>{location_city} Location Products </strong>  ({selectedLocationProducts.length} Products) <strong>:</strong></p>
-                                                        <MDBIcon onClick={() => handleProductCreateIconClick()} icon="plus" className="newProductIcon"> </MDBIcon>
-                                                    </div>
-
-                                                    <div>
-
-
-
-
-
-                                                    </div>
-
-                                                    {
-                                                        createProductModelOpen && selectedLocation ?
-                                                            <Popup
-                                                                title={`Create Product in ${location_city} Location`}
-                                                                eventHandler={addProduct}
-                                                                handlerBtnValue="Create"
-                                                                itemPropertiesLabels={productPropertiesLabels}
-                                                                isModelOpen={createProductModelOpen}
-                                                                setIsModelOpen={setCreateProductModelOpen}
-                                                                data={{ 'id': selectedLocation.location_id, requestFeedback }}
-                                                            />
-                                                            :
-                                                            null
-                                                    }
-
-
-                                                </MDBContainer>
-                                                :
-                                                <Fragment>
-                                                    <p style={{ color: "red" }}>
-                                                        <strong>{location_city} Location doesn't has products. <MDBLink className="CreateProductsLink" onClick={() => handleProductCreateIconClick()}> Create Product </MDBLink></strong>
-                                                    </p>
-                                                </Fragment>
-                                        }
 
                                     </Fragment>
                                     :

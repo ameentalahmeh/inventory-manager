@@ -21,6 +21,18 @@
     border-color: #2196f3;
 }
 
+.ItemsSectionTitle {
+    width: 100%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.newItemIcon {
+    color: #2196f3;
+    cursor: pointer;
+}
+
 .vl {
     border-left: 3px solid #2196f3;
     height: auto;

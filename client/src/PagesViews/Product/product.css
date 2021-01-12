@@ -26,15 +26,6 @@ table.table td, table.table th {
 .CreateMovementsLink {
     display: contents;
 }
-
-.productMovementSectionTitle {
-    width: 100%;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-}
-
-.newMovmentIcon {
-    color: #2196f3;
-    cursor: pointer;
+.newProductIcon {
+    margin-right: 10%;
 }

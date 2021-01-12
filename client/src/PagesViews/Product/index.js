@@ -25,7 +25,9 @@ const Product = () => {
     const [products, setProducts] = useState(null);
     const [productMovements, setProductMovements] = useState(null);
 
+    const [createProductModelOpen, setCreateProductModelOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+
 
     const [selectedMovement, setSelectedMovement] = useState(null);
     const [selectedMovementIndex, setSelectedMovementIndex] = useState(null);
@@ -34,7 +36,6 @@ const Product = () => {
     const [updatedProductProperty, setUpdatedProductProperty] = useState(null);
 
     const [newMovment, setNewMovement] = useState({});
-
     const [createMovementModelOpen, setCreateMovementModelOpen] = useState(false);
     const [updateMovementModelOpen, setUpdateMovementModelOpen] = useState(false);
 
@@ -42,11 +43,42 @@ const Product = () => {
     const [requestFeedback, setRequestFeedback] = useState(null);
     const [isUpdateProductProperityError, setIsUpdateProductProperityError] = useState(null)
 
+
+
     // Functions
 
     const getProducts = () => axios.get(`/api/products`)
 
     const getProductMovements = () => axios.get(`/api/productmovements`)
+
+    // Product Functions 
+    const addProduct = (createdProduct) => {
+        if (Object.keys(createdProduct).length <= 0) {
+            setRequestFeedback({ "error": "The (name) field can't be empty!" })
+        } else {
+            axios
+                .post(`/api/product`, createdProduct)
+                .then((response) => {
+                    let { data } = response;
+                    if (data && !data.error) {
+                        setTimeout(() => {
+                            setRequestFeedback(data.message)
+                            getProducts()
+                                .then((fetchedProducts) => {
+                                    let { data } = fetchedProducts && fetchedProducts.data && fetchedProducts.data;
+                                    setProducts(data)
+                                })
+                        }, '200');
+                    } else {
+                        setRequestFeedback({ "error": data.error })
+                    }
+
+                })
+                .catch((err) => {
+                    console.log(err.message);
+                })
+        }
+    }
 
     const updateProductProperty = (propLabel) => {
 
@@ -79,35 +111,7 @@ const Product = () => {
             })
     }
 
-    const updateMovementProperties = (updatedMovement, movement_id) => {
-
-        if (updatedMovement['movement_timestamp']) {
-            updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
-            console.log(updatedMovement['movement_timestamp']);
-        }
-
-        axios
-            .put(`/api/productmovement/${movement_id}`, updatedMovement)
-            .then((response) => {
-                let { data } = response;
-                if (data && !data.error) {
-                    setTimeout(() => {
-                        setRequestFeedback(data.message)
-                        getProductMovements()
-                            .then((fetchedProductMovements) => {
-                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
-                                setProductMovements(data)
-                            })
-                    }, '200');
-                } else {
-                    setRequestFeedback({ "error": data.error })
-                }
-            })
-            .catch((err) => {
-                console.log(err.message);
-            })
-    }
-
+    // Movement Functions 
     const addMovement = (createdMovement, product_id) => {
 
         newMovment['product_id'] = product_id;
@@ -146,6 +150,35 @@ const Product = () => {
             })
     }
 
+    const updateMovementProperties = (updatedMovement, movement_id) => {
+
+        if (updatedMovement['movement_timestamp']) {
+            updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
+        }
+
+        axios
+            .put(`/api/productmovement/${movement_id}`, updatedMovement)
+            .then((response) => {
+                let { data } = response;
+                if (data && !data.error) {
+                    setTimeout(() => {
+                        setRequestFeedback(data.message)
+                        getProductMovements()
+                            .then((fetchedProductMovements) => {
+                                let { data } = fetchedProductMovements && fetchedProductMovements.data && fetchedProductMovements.data;
+                                setProductMovements(data)
+                            })
+                    }, '200');
+                } else {
+                    setRequestFeedback({ "error": data.error })
+                }
+            })
+            .catch((err) => {
+                console.log(err.message);
+            })
+    }
+
+
     useEffect(() => {
         try {
             getProducts()
@@ -182,11 +215,15 @@ const Product = () => {
         setRequestFeedback(null)
     }
 
+    const handleProductCreateClick = () => {
+        setCreateProductModelOpen(true)
+        setRequestFeedback(null)
+    }
 
     // Varaibles
     let product_name = selectedProduct ? selectedProduct.name : null;
     let selectedProductMovements = productMovements && selectedProduct && productMovements.filter(productMovement => productMovement.product_id === selectedProduct.product_id)
-    let productPropertiesLabels = { "name": "Name", "warehouse": "Warehouse", "qty": "Quantity" };
+    let productPropertiesLabels = { "name": "Name" };
     let movementPropertiesLabels = { "Date": "movement_timestamp", "Source": "from_location", "Destination": "to_location", "Quantity": "qty" };
 
     if (requestFeedback && !requestFeedback['error']) {
@@ -223,15 +260,43 @@ const Product = () => {
                     :
                     <MDBContainer className="mainContainer">
                         <MDBContainer className="subContainer">
-                            <MDBTypography variant="h4-responsive" colorText="blue"> Products List:</MDBTypography>
-                            <List
-                                items={products}
-                                setSelectedItem={setSelectedProduct}
-                                selectedItem={selectedProduct}
-                                setSelectedPropertyIdx={setSelectedPropertyIdx}
-                                item_id="product_id"
-                                itemVal="name"
-                            />
+                            {
+                                products && products.length > 0 ?
+                                    <Fragment>
+                                        <div className="ItemsSectionTitle">
+                                            <MDBTypography variant="h4-responsive" colorText="blue"> Products List:</MDBTypography>
+                                            <MDBIcon onClick={() => handleProductCreateClick()} icon="plus" className="newItemIcon newProductIcon"> </MDBIcon>
+                                        </div>
+                                        <List
+                                            items={products}
+                                            setSelectedItem={setSelectedProduct}
+                                            selectedItem={selectedProduct}
+                                            setSelectedPropertyIdx={setSelectedPropertyIdx}
+                                            item_id="product_id"
+                                            itemVal="name"
+                                        />
+                                    </Fragment>
+
+                                    :
+                                    <p style={{ color: "red" }}>
+                                        <strong>No products. <MDBLink className="CreateProductsLink" onClick={() => handleProductCreateClick()}> Create Product </MDBLink></strong>
+                                    </p>
+                            }
+
+                            {
+                                createProductModelOpen ?
+                                    <Popup
+                                        title={`Create New Product`}
+                                        eventHandler={addProduct}
+                                        handlerBtnValue="Create"
+                                        itemPropertiesLabels={{ "Name": "name" }}
+                                        isModelOpen={createProductModelOpen}
+                                        setIsModelOpen={setCreateProductModelOpen}
+                                        data={{ requestFeedback }}
+                                    />
+                                    :
+                                    null
+                            }
                         </MDBContainer>
 
                         <div className="vl"></div>
@@ -257,9 +322,9 @@ const Product = () => {
                                         {
                                             selectedProductMovements && selectedProductMovements.length > 0 ?
                                                 <MDBContainer className="subContainer">
-                                                    <div className="productMovementSectionTitle">
+                                                    <div className="ItemsSectionTitle">
                                                         <p style={{ marginTop: "1rem" }}><strong>{product_name} Product Movements </strong>  ({selectedProductMovements.length} Movements) <strong>:</strong> </p>
-                                                        <MDBIcon onClick={() => handleMovementCreateClick()} icon="plus" className="newMovmentIcon"> </MDBIcon>
+                                                        <MDBIcon onClick={() => handleMovementCreateClick()} icon="plus" className="newItemIcon"> </MDBIcon>
                                                     </div>
 
                                                     <MDBTable hover bordered>
@@ -317,11 +382,9 @@ const Product = () => {
 
                                                 </MDBContainer>
                                                 :
-                                                <Fragment>
-                                                    <p style={{ color: "red" }}>
-                                                        <strong>{product_name} Product doesn't has movements. <MDBLink className="CreateMovementsLink" onClick={() => handleMovementCreateClick()}> Create Movement </MDBLink></strong>
-                                                    </p>
-                                                </Fragment>
+                                                <p style={{ color: "red" }}>
+                                                    <strong>{product_name} Product doesn't has movements. <MDBLink className="CreateMovementsLink" onClick={() => handleMovementCreateClick()}> Create Movement </MDBLink></strong>
+                                                </p>
                                         }
 
                                         {
@@ -351,13 +414,3 @@ const Product = () => {
 }
 
 export default Product;
-
-
-// if (createdMovement && (Object.keys(createdMovement).length <= 0 || !createdMovement['movement_timestamp'] || !createdMovement['qty'])) {
-//     setRequestFeedback({ "error": "There are empty required fields!" })
-
-// } else if ((!createdMovement['to_location'] || createdMovement['to_location'] === '') && (!createdMovement['from_location'] || createdMovement['from_location'] === '')) {
-//     setRequestFeedback({ "error": "You have to include source location or destination location at least!" })
-// } else {
-
-// }
