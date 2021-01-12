@@ -3,6 +3,7 @@ from database.connection import create_connection
 from flask import Flask, request, jsonify
 import sys
 import yaml
+import pandas as pd
 
 # import custom functions
 sys.path.append("/server/database")
@@ -19,18 +20,16 @@ connection = create_connection(
 
 # Vars declartion
 acceptedRequestMethods = ["GET", "POST", "PUT"]
-vaildResources = {
-    "AddAndEdit": ["product", "location", "productmovement"],
-    "View": ["products", "locations", "productmovements"]
-}
-
+vaildResources = ["product", "location", "productmovement"]
 
 # Request Validation
+
+
 def requestValidation(tablename, method, body, item):
     vaildationError = {}
 
     requiredFieldsByTableName = {
-        'product': ['prod_location_id', 'name', 'warehouse', 'qty'],
+        'product': ['name'],
         'location': ['city'],
         'productmovement': ['product_id', 'movement_timestamp', 'qty']
     }
@@ -49,7 +48,7 @@ def requestValidation(tablename, method, body, item):
         else:
             validRequestBodyKeys = requiredFieldsByTableName[tablename]
 
-        diff = [x for x in requestBodyFields if x not in validRequestBodyKeys]
+        diff = [rbf for rbf in requestBodyFields if rbf not in validRequestBodyKeys]
 
         if diff:
             vaildationError = jsonify(
@@ -58,10 +57,12 @@ def requestValidation(tablename, method, body, item):
         else:
             emptyFields = []
             for f in list(requiredFieldsByTableName[tablename]):
+                if type(f) == 'str':
+                    body[f] = body[f].strip()
+
                 notExistOrEmpty = f not in requestBodyFields or not bool(
-                    body[f].strip())
-                existAndEmpty = f in requestBodyFields and not bool(
-                    body[f].strip())
+                    body[f])
+                existAndEmpty = f in requestBodyFields and not bool(body[f])
 
                 if (notExistOrEmpty and method == "POST") or (existAndEmpty and method == "PUT"):
                     emptyFields.append(f)
@@ -105,27 +106,43 @@ def requestValidation(tablename, method, body, item):
                     to_locationInDataBase = item['to_location']
                     from_locationInDataBase = item['from_location']
 
-                    # Removing case
+                    # No Changes case
+                    body['movement_timestamp'] = pd.to_datetime(
+                        body['movement_timestamp'], infer_datetime_format=True)
+                    item['movement_timestamp'] = pd.to_datetime(
+                        item['movement_timestamp'], infer_datetime_format=True)
 
-                    from_location_removing_with_no_to_locationInDataBase = (
-                        not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
+                    equal = len(
+                        [rbf for rbf in requestBodyFields if body[rbf] not in item.values()]) <= 0
 
-                    to_location_removing_with_no_from_locationInDataBase = (
-                        not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
-
-                    removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
-
-                    if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+                    if equal:
                         vaildationError = jsonify(
-                            {"error": "Not allowed update since it will remove both source and destination locations !"})
-                    
-                    # Similarity case
-                    to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase = to_locationExistAndNotEmpty and (body['to_location'] == item['from_location'])
-                    from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase = from_locationExistAndNotEmpty and (body['from_location'] == item['to_location'])
-                    
-                    if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
-                        vaildationError = jsonify(
-                            {"error": "Not allowed update since it will make both source and destination locations have the same value !"})
+                            {"error": "No changes made !"})
+
+                    # New Changes (Removing case)
+                    else:
+                        from_location_removing_with_no_to_locationInDataBase = (
+                            not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
+
+                        to_location_removing_with_no_from_locationInDataBase = (
+                            not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
+
+                        removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
+
+                        if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+                            vaildationError = jsonify(
+                                {"error": "Not allowed update since it will remove both source and destination locations !"})
+
+                        # New Changes (Similarity case)
+                        else:
+                            to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase = to_locationExistAndNotEmpty and (
+                                body['to_location'] == item['from_location'])
+                            from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase = from_locationExistAndNotEmpty and (
+                                body['from_location'] == item['to_location'])
+
+                            if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
+                                vaildationError = jsonify(
+                                    {"error": "Not allowed update since it will make both source and destination locations have the same value !"})
 
     else:
         if method == "PUT":
@@ -141,27 +158,32 @@ def requestValidation(tablename, method, body, item):
 def routing(resource, id):
     resource = resource.strip()
     if request.method in acceptedRequestMethods:
-        if resource in vaildResources['View'] and request.method == "GET":
-            items = queries.getAllItems(resource[: -1], connection)
-            if items and len(items) > 0:
-                return jsonify({"data": items})
-            else:
-                return jsonify({"error": "There is no stored data"})
+        if resource in vaildResources:
+            if not id:
+                items = queries.getAllItems(resource, connection)
+                if request.method == "GET":
+                    if items and len(items) > 0:
+                        return jsonify({"data": items})
+                    else:
+                        return jsonify({"error": "There is no stored data"})
 
-        elif resource in vaildResources['AddAndEdit'] and request.method == "POST" and id == None:
-            items = queries.getAllItems(resource, connection)
-            vaildationError = requestValidation(
-                resource, 'POST', request.json, None)
-            if vaildationError:
-                return vaildationError
-            else:
-                return queries.addNewItem(resource, request.json, len(items)+1, connection)
+                elif request.method == "POST":
+                    vaildationError = requestValidation(
+                        resource, 'POST', request.json, None)
+                    if vaildationError:
+                        return vaildationError
+                    else:
+                        return queries.addNewItem(resource, request.json, len(items)+1, connection)
 
-        elif resource in vaildResources["AddAndEdit"] and request.method != "POST":
-            if id:
+                else:
+                    return jsonify({"error": "The " + request.method + " not allowed for the requested URL !"}), 405
+            else:
                 item = queries.getItemById(resource, id, connection)
                 if item:
-                    if request.method == "PUT":
+                    if request.method == "GET":
+                        return jsonify({"data": item})
+
+                    elif request.method == "PUT":
                         vaildationError = requestValidation(
                             resource, 'PUT', request.json, item)
                         if vaildationError:
@@ -169,12 +191,10 @@ def routing(resource, id):
                         else:
                             return queries.updateItem(resource, request.json, id, connection)
                     else:
-                        return jsonify({"data": item})
-                else:
-                    return jsonify({'error': "No " + resource + " related with the requested id: " + id})
-            else:
-                return jsonify({'error': "ID parameter are missing !!"}), 404
+                        return jsonify({"error": "The " + request.method + " not allowed for the requested URL !"}), 405
 
+                else:
+                    return jsonify({'error': "No " + resource + " related with the passed id: " + id})
         else:
             return jsonify({'error': 'Invaild Endpoint'}), 404
     else:
@@ -183,3 +203,6 @@ def routing(resource, id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+# body['movement_timestamp'] = body['movement_timestamp'].to_pydatetime()

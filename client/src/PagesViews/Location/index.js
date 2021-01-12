@@ -31,7 +31,7 @@ const Location = () => {
 
     // Functions
 
-    const getLocations = () => axios.get(`/api/locations`)
+    const getLocations = () => axios.get(`/api/location`)
 
     const addLocation = (createdLocation) => {
 

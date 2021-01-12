@@ -47,9 +47,9 @@ const Product = () => {
 
     // Functions
 
-    const getProducts = () => axios.get(`/api/products`)
+    const getProducts = () => axios.get(`/api/product`)
 
-    const getProductMovements = () => axios.get(`/api/productmovements`)
+    const getProductMovements = () => axios.get(`/api/productmovement`)
 
     // Product Functions 
     const addProduct = (createdProduct) => {
