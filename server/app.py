@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import sys
 import yaml
 import pandas as pd
+import datetime
 
 # import custom functions
 sys.path.append("/server/database")
@@ -54,10 +55,11 @@ def requestValidation(tablename, method, body, item):
             vaildationError = jsonify(
                 {"error": "The send request contains invalid fields which are (" + ','.join(list(diff)) + ').'})
 
+        # Check Empty.
         else:
             emptyFields = []
             for f in list(requiredFieldsByTableName[tablename]):
-                if type(f) == 'str':
+                if isinstance(body[f], str):
                     body[f] = body[f].strip()
 
                 notExistOrEmpty = f not in requestBodyFields or not bool(
@@ -71,84 +73,109 @@ def requestValidation(tablename, method, body, item):
                 vaildationError = jsonify(
                     {'error': "The (" + ', '.join(list(emptyFields)).rstrip() + ") field/s can't be empty!"})
 
-            # Source and Destination check.
-            elif tablename == "productmovement":
+            # Check Format.
+            else:
+                inValidFormat = []
 
-                # Post rules
-                to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
-                    body['to_location'].strip())
-                from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
-                    body['from_location'].strip())
+                # print(isinstance(datetime.date(body['movement_timestamp']), datetime.date))
 
-                # Put rules
-                to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
-                    body['to_location'].strip())
-                from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
-                    body['from_location'].strip())
+                # for rbf in requestBodyFields:
+                #     if rbf == 'movement_timestamp' and not isinstance(datetime.datetime(body['movement_timestamp']), datetime.date):
+                #         inValidFormat.append('movement_timestamp')
 
-                # Both
-                to_locationExistAndNotEmpty = 'to_location' in requestBodyFields and bool(
-                    body['to_location'].strip())
-                from_locationExistAndNotEmpty = 'from_location' in requestBodyFields and bool(
-                    body['from_location'].strip())
+                #     elif rbf == 'qty' and not isinstance(body['qty'], int):
+                #         inValidFormat.append('qty')
 
-                if to_locationExistAndNotEmpty and from_locationExistAndNotEmpty and (body['to_location'].strip() == body['from_location'].strip()):
+                #     elif not isinstance(body[rbf], str):
+                #         inValidFormat.append(rbf)
+
+                if len(inValidFormat) > 0:
                     vaildationError = jsonify(
-                        {"error": "The source and destination locations can't be have the same value !"})
+                        {"error": "Invalid format for (" + ', '.join(list(inValidFormat)).rstrip() + ") field/s !!"})
 
-                elif method == "POST":
-                    if to_locationNotExistOrEmpty and from_locationNotExistOrEmpty:
-                        vaildationError = jsonify(
-                            {"error": "You have to enter at least one of source and destination locations !"})
+                # Check Source and Destination fields rules
+                else:
+                    if tablename == "productmovement":
 
-                elif method == "PUT":
+                        # Post rules
+                        to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
+                            body['to_location'].strip())
+                        from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
+                            body['from_location'].strip())
 
-                    to_locationInDataBase = item['to_location']
-                    from_locationInDataBase = item['from_location']
+                        # Put rules
+                        to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
+                            body['to_location'].strip())
+                        from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
+                            body['from_location'].strip())
 
-                    # No Changes case
-                    body['movement_timestamp'] = pd.to_datetime(
-                        body['movement_timestamp'], infer_datetime_format=True)
-                    item['movement_timestamp'] = pd.to_datetime(
-                        item['movement_timestamp'], infer_datetime_format=True)
+                        # Both
+                        to_locationExistAndNotEmpty = 'to_location' in requestBodyFields and bool(
+                            body['to_location'].strip())
+                        from_locationExistAndNotEmpty = 'from_location' in requestBodyFields and bool(
+                            body['from_location'].strip())
 
-                    equal = len(
-                        [rbf for rbf in requestBodyFields if body[rbf] not in item.values()]) <= 0
-
-                    if equal:
-                        vaildationError = jsonify(
-                            {"error": "No changes made !"})
-
-                    # New Changes (Removing case)
-                    else:
-                        from_location_removing_with_no_to_locationInDataBase = (
-                            not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
-
-                        to_location_removing_with_no_from_locationInDataBase = (
-                            not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
-
-                        removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
-
-                        if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+                        if to_locationExistAndNotEmpty and from_locationExistAndNotEmpty and (body['to_location'].strip() == body['from_location'].strip()):
                             vaildationError = jsonify(
-                                {"error": "Not allowed update since it will remove both source and destination locations !"})
+                                {"error": "The source and destination locations can't be have the same value !"})
 
-                        # New Changes (Similarity case)
-                        else:
-                            to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase = to_locationExistAndNotEmpty and (
-                                body['to_location'] == item['from_location'])
-                            from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase = from_locationExistAndNotEmpty and (
-                                body['from_location'] == item['to_location'])
-
-                            if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
+                        elif method == "POST":
+                            if to_locationNotExistOrEmpty and from_locationNotExistOrEmpty:
                                 vaildationError = jsonify(
-                                    {"error": "Not allowed update since it will make both source and destination locations have the same value !"})
+                                    {"error": "You have to enter at least one of source and destination locations !"})
+
+                        elif method == "PUT":
+                            # No Changes case
+
+                            temp = dict(body)
+                            if 'movement_timestamp' in requestBodyFields:
+                                temp['movement_timestamp'] = pd.to_datetime(
+                                    temp['movement_timestamp'], infer_datetime_format=True)
+                                item['movement_timestamp'] = pd.to_datetime(
+                                    item['movement_timestamp'], infer_datetime_format=True)
+
+                            equal = len(
+                                [rbf for rbf in requestBodyFields if temp[rbf] != item[rbf]]) <= 0
+
+                            if equal:
+                                vaildationError = jsonify(
+                                    {"error": "No changes made !"})
+
+                            # New Changes (Removing case)
+                            else:
+
+                                to_locationInDataBase = item['to_location']
+                                from_locationInDataBase = item['from_location']
+
+                                from_location_removing_with_no_to_locationInDataBase = (
+                                    not to_locationInDataBase) and to_locationNotExistOrEmpty and from_locationExistAndEmpty
+
+                                to_location_removing_with_no_from_locationInDataBase = (
+                                    not from_locationInDataBase) and from_locationNotExistOrEmpty and to_locationExistAndEmpty
+
+                                removing_both = to_locationExistAndEmpty and from_locationExistAndEmpty
+
+                                if from_location_removing_with_no_to_locationInDataBase or to_location_removing_with_no_from_locationInDataBase or removing_both:
+                                    vaildationError = jsonify(
+                                        {"error": "Not allowed update since it will remove both source and destination locations !"})
+
+                                # New Changes (Similarity case)
+                                else:
+                                    to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase = to_locationExistAndNotEmpty and (
+                                        body['to_location'] == item['from_location'])
+                                    from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase = from_locationExistAndNotEmpty and (
+                                        body['from_location'] == item['to_location'])
+
+                                    if to_locationExistAndNotEmpty_andEqualTo_from_locationInDataBase or from_locationExistAndNotEmpty_andEqualTo_to_locationInDataBase:
+                                        vaildationError = jsonify(
+                                            {"error": "Not allowed update since it will make both source and destination locations have the same value !"})
 
     else:
         if method == "PUT":
             vaildationError = jsonify({"error": "No changes made !"})
         elif method == "POST":
             vaildationError = jsonify({"error": "Missing request body !"})
+
     return vaildationError
 
 
@@ -203,6 +230,3 @@ def routing(resource, id):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-# body['movement_timestamp'] = body['movement_timestamp'].to_pydatetime()
