@@ -19,6 +19,9 @@ const NavBar = (props) => {
                 <MDBNavItem active={activeKey === "3"}>
                     <MDBNavLink to="/location">Locations</MDBNavLink>
                 </MDBNavItem>
+                <MDBNavItem active={activeKey === "4"}>
+                    <MDBNavLink to="/report">Report</MDBNavLink>
+                </MDBNavItem>
             </MDBNavbarNav>
         </MDBNavbar >
     );

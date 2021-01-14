@@ -62,7 +62,7 @@ const Popup = (props) => {
                                         null
                                 }
                                 {
-                                    propLabel === 'Destination' ?
+                                    propLabel === 'Destination' || propLabel == 'City'?
                                         <MDBLink to='/location' target="_blank" className="BrowseLocationsLink"> Browse locations </MDBLink>
                                         :
                                         null

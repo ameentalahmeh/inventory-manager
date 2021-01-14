@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import MainPage from "./PagesViews/MainPage";
 import Product from "./PagesViews/Product";
 import Location from "./PagesViews/Location";
+import Report from "./PagesViews/Report";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route exact path="/" component={MainPage} />
         <Route exact path="/product" component={Product} />
         <Route exact path="/location" component={Location} />
+        <Route exact path="/report" component={Report} />
       </Router>
     </div>
   );
