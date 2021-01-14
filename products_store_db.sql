@@ -129,23 +129,3 @@ VALUES
         "8",
         "T-Shirt"
     );
-
--- Add Movements 
-INSERT INTO
-    productmovement (
-        movement_id,
-        movement_timestamp,
-        from_location,
-        to_location,
-        product_id,
-        qty
-    )
-VALUES
-    (
-        "1",
-        "2021-01-05 11:52:00",
-        "Hebron",
-        "Jenin",
-        "1",
-        2
-    );

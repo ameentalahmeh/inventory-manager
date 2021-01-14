@@ -117,7 +117,11 @@ const Product = () => {
     newMovment['product_id'] = product_id;
 
     if (createdMovement['movement_timestamp']) {
-      newMovment['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD HH:mm:ss")
+      createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD HH:mm:ss")
+    }
+
+    if (createdMovement['qty']) {
+      createdMovement['qty'] = parseInt(createdMovement['qty'])
     }
 
     if (createdMovement) {
@@ -127,6 +131,8 @@ const Product = () => {
       setNewMovement(newMovment)
     }
 
+    console.log(newMovment);
+    
     axios
       .post(`/api/productmovement`, newMovment)
       .then((response) => {
@@ -154,6 +160,10 @@ const Product = () => {
 
     if (updatedMovement['movement_timestamp']) {
       updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
+    }
+
+    if (updatedMovement['qty']) {
+      updatedMovement['qty'] = parseInt(updatedMovement['qty'])
     }
 
     axios
@@ -352,13 +362,22 @@ const Product = () => {
                                       <td>{to_location}</td>
                                       <td>{qty}</td>
                                       <td>
-                                        <MDBBtn
-                                          className="EditBtn"
-                                          color="blue"
-                                          onClick={() => handleMovementEditIconClick(movement, idx)}
-                                        >
-                                          Edit
-                                                                                </MDBBtn>
+                                        {
+                                          moment().diff(moment(movement_timestamp).utc().format('YYYY/MM/DD hh:mm A'), 'minutes') <= 0 ?
+                                            <MDBBtn
+                                              className="EditBtn"
+                                              color="blue"
+                                              onClick={() => handleMovementEditIconClick(movement, idx)}
+                                            >
+                                              Edit
+                                         </MDBBtn>
+                                            :
+                                            <MDBTypography>
+                                              The movement expired
+                                         </MDBTypography>
+
+
+                                        }
                                       </td>
                                     </tr>)
                                 })

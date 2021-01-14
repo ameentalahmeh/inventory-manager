@@ -3,6 +3,7 @@ from flask import jsonify
 import pandas as pd
 import datetime
 import sys
+from dateutil.parser import parse
 
 # import custom functions
 sys.path.append("/server")
@@ -42,9 +43,9 @@ def requestValidation(tablename, method, body, item):
             emptyFields = []
             for f in list(requiredFieldsByTableName[tablename]):
                 notExistOrEmpty = f not in requestBodyFields or not bool(
-                    str(body[f]))
+                    str(body[f]).strip())
                 existAndEmpty = f in requestBodyFields and not bool(
-                    str(body[f]))
+                    str(body[f]).strip())
 
                 if (notExistOrEmpty and method == "POST") or (existAndEmpty and method == "PUT"):
                     emptyFields.append(f)
@@ -56,72 +57,75 @@ def requestValidation(tablename, method, body, item):
             # Check Format.
             else:
                 inValidFormat = []
-
-                # print(isinstance(datetime.date(body['movement_timestamp']), datetime.date))
-
                 for rbf in requestBodyFields:
-                    if rbf == 'movement_timestamp' and not isinstance(datetime.datetime(body['movement_timestamp']), datetime.date):
-                        inValidFormat.append('movement_timestamp')
+                    if rbf == 'movement_timestamp':
+                        try:
+                            parse(body[rbf])
+                        except:
+                            inValidFormat.append('movement_timestamp')
 
-                    elif rbf == 'qty' and not isinstance(body['qty'], int):
-                        inValidFormat.append('qty')
+                    elif rbf == 'qty':
+                        if(type(body[rbf]) != int):
+                            inValidFormat.append('qty')
+                        elif body[rbf] <= 0:
+                            vaildationError = jsonify(
+                                {"error": "Movement quantity must be more than zero !"})
 
-                    elif not isinstance(body[rbf], str):
-                        inValidFormat.append(rbf)
+                    else:
+                        if(type(body[rbf]) != str):
+                            inValidFormat.append(rbf)
 
                 if len(inValidFormat) > 0:
                     vaildationError = jsonify(
                         {"error": "Invalid format for (" + ', '.join(list(inValidFormat)).rstrip() + ") field/s !!"})
 
                 else:
-                    if tablename == "productmovement":
 
-                        # Post rules
-                        to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
-                            body['to_location'].strip())
-                        from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
-                            body['from_location'].strip())
+                    if method == 'PUT' and tablename != 'productmovement':
+                        equal = len(
+                            [rbf for rbf in requestBodyFields if body[rbf] != item[rbf]]) <= 0
 
-                        # Put rules
-                        to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
-                            body['to_location'].strip())
-                        from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
-                            body['from_location'].strip())
-
-                        # Both
-                        to_locationExistAndNotEmpty = 'to_location' in requestBodyFields and bool(
-                            body['to_location'].strip())
-                        from_locationExistAndNotEmpty = 'from_location' in requestBodyFields and bool(
-                            body['from_location'].strip())
-
-                        if to_locationExistAndNotEmpty and from_locationExistAndNotEmpty and (body['to_location'].strip() == body['from_location'].strip()):
+                        if equal:
                             vaildationError = jsonify(
-                                {"error": "The source and destination locations can't be have the same value !"})
+                                {"error": "No changes made !"})
 
-                        elif method == "POST":
-                            if to_locationNotExistOrEmpty and from_locationNotExistOrEmpty:
-                                vaildationError = jsonify(
-                                    {"error": "You have to enter at least one of source and destination locations !"})
+                    # New Changes (Removing case)
+                    else:
+                        if tablename == 'productmovement':
+                            # Post rules
+                            to_locationNotExistOrEmpty = 'to_location' not in requestBodyFields or not bool(
+                                body['to_location'].strip())
+                            from_locationNotExistOrEmpty = 'from_location' not in requestBodyFields or not bool(
+                                body['from_location'].strip())
 
-                        elif method == "PUT":
-                            # No Changes case
+                            # Put rules
+                            to_locationExistAndEmpty = 'to_location' in requestBodyFields and not bool(
+                                body['to_location'].strip())
+                            from_locationExistAndEmpty = 'from_location' in requestBodyFields and not bool(
+                                body['from_location'].strip())
 
-                            temp = dict(body)
+                            # Both
+                            to_locationExistAndNotEmpty = 'to_location' in requestBodyFields and bool(
+                                body['to_location'].strip())
+                            from_locationExistAndNotEmpty = 'from_location' in requestBodyFields and bool(
+                                body['from_location'].strip())
+
                             if 'movement_timestamp' in requestBodyFields:
-                                temp['movement_timestamp'] = pd.to_datetime(
-                                    temp['movement_timestamp'], infer_datetime_format=True)
-                                item['movement_timestamp'] = pd.to_datetime(
-                                    item['movement_timestamp'], infer_datetime_format=True)
+                                body['movement_timestamp'] = pd.to_datetime(
+                                    body['movement_timestamp'], infer_datetime_format=True)
+                                body['movement_timestamp'] = body['movement_timestamp'].to_pydatetime(
+                                )
 
-                            equal = len(
-                                [rbf for rbf in requestBodyFields if temp[rbf] != item[rbf]]) <= 0
-
-                            if equal:
+                            if to_locationExistAndNotEmpty and from_locationExistAndNotEmpty and (body['to_location'].strip() == body['from_location'].strip()):
                                 vaildationError = jsonify(
-                                    {"error": "No changes made !"})
+                                    {"error": "The source and destination locations can't be have the same value !"})
 
-                            # New Changes (Removing case)
-                            else:
+                            elif method == "POST":
+                                if to_locationNotExistOrEmpty and from_locationNotExistOrEmpty:
+                                    vaildationError = jsonify(
+                                        {"error": "You have to enter at least one of source and destination locations !"})
+
+                            elif method == "PUT":
 
                                 to_locationInDataBase = item['to_location']
                                 from_locationInDataBase = item['from_location']
@@ -159,23 +163,33 @@ def requestValidation(tablename, method, body, item):
     return vaildationError
 
 
-def dataValidation(body, method, report, connection):
+def dataValidation(body, method, report, item, connection):
     dataValidationError = ''
     if body:
+
+        # if method == "PUT" and item and item['movement_timestamp'] and :
         requestBodyFields = list(body.keys())
+        invalid_locations = []
         for rbf in requestBodyFields:
-            if (rbf == 'city' and method == "PUT") or rbf == 'to_location' or rbf == 'from_location':
+            if rbf == 'to_location' or rbf == 'from_location':
                 locations = queries.getAllItems('location', connection)
                 validLocation = [
                     loc for loc in locations if not bool(str(body[rbf].strip())) or body[rbf] == loc['city']]
-
                 if not validLocation:
-                    return jsonify(
-                        {"error": "Invalid location (" + body[rbf] + "). See the valid locations through the (Browsing locations) link !!"})
-
+                    invalid_locations.append(body[rbf])
             elif rbf == 'qty':
-                from_location_exist_and_not_empty = 'from_location' in requestBodyFields and bool(
-                    str(body['from_location']))
+                if 'from_location' in requestBodyFields:
+                    from_location_exist_and_not_empty = bool(
+                        str(body['from_location']))
+                    from_location = str(body['from_location'])
+                elif item and 'from_location' in item.keys():
+                    from_location_exist_and_not_empty = bool(
+                        str(item['from_location']))
+                    from_location = str(item['from_location'])
+                else:
+                    from_location_exist_and_not_empty = False
+                    from_location = None
+
                 product_id_exist_and_not_empty = 'product_id' in requestBodyFields and bool(
                     str(body['product_id']))
 
@@ -184,7 +198,7 @@ def dataValidation(body, method, report, connection):
                         'product', body['product_id'], connection)
 
                     if product and from_location_exist_and_not_empty:
-                        warehouse = body['from_location']
+                        warehouse = from_location
                         product_name = product['name']
                         product_qty = 0
 
@@ -195,10 +209,21 @@ def dataValidation(body, method, report, connection):
                             product_qty = relatedReportRow[0]['qty']
 
                         if int(product_qty) < int(body['qty']):
-                            return jsonify({"error": " The quantity for the product (" + product_name + ") in the (" + warehouse +
-                                            ") location which (" + str(product_qty) +
-                                            ") is less than the exporting quantity (" +
-                                            body['qty'] +
-                                            ") !!"})
+                            dataValidationError = {"error": " The quantity for the product (" + product_name + ") in the (" + warehouse +
+                                                   ") location which (" + str(product_qty) +
+                                                   ") is less than the exporting quantity (" +
+                                                   str(body['qty']) +
+                                                   ") !!"}
+        if len(invalid_locations) > 0:
+            dataValidationError = {"error": "Invalid location/s (" + ','.join(list(
+                invalid_locations)) + "). See the valid locations through the (Browsing locations) link !!"}
 
     return dataValidationError
+    #   elif rbf == 'qty':
+    #        try:
+    #             int(body[rbf])
+    #             if int(body[rbf]) <= 0:
+    #                 vaildationError = jsonify(
+    #                     {"error": "Movement quantity must be more than zero !"})
+    #         except:
+    #             inValidFormat.append('qty')

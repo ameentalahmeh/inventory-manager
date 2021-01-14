@@ -90,14 +90,14 @@ def routing(resource, id):
                             return jsonify({"error": "There is no stored data"})
 
                     elif request.method == "POST":
+                        print(request.json)
                         vaildationError = requestValidator(
                             resource, 'POST', request.json, None)
                         if vaildationError:
                             return vaildationError
                         else:
                             dataValidationError = dataValidator(
-                                request.json, 'POST', report, connection)
-                            print(dataValidationError)
+                                request.json, 'POST', report, None, connection)
                             if dataValidationError:
                                 return dataValidationError
                             else:
@@ -118,7 +118,7 @@ def routing(resource, id):
                             return vaildationError
                         else:
                             dataValidationError = dataValidator(
-                                request.json, 'PUT', report, connection)
+                                request.json, 'PUT', report, item, connection)
                             if dataValidationError:
                                 return dataValidationError
                             else:
