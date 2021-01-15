@@ -120,7 +120,7 @@ const Product = () => {
       createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD HH:mm:ss")
     }
 
-    if (createdMovement['qty']) {
+    if (createdMovement['qty'] && createdMovement['qty'] - parseInt(createdMovement['qty']) === 0) {
       createdMovement['qty'] = parseInt(createdMovement['qty'])
     }
 
@@ -131,8 +131,6 @@ const Product = () => {
       setNewMovement(newMovment)
     }
 
-    console.log(newMovment);
-    
     axios
       .post(`/api/productmovement`, newMovment)
       .then((response) => {
@@ -157,14 +155,16 @@ const Product = () => {
   }
 
   const updateMovementProperties = (updatedMovement, movement_id) => {
-
+    
     if (updatedMovement['movement_timestamp']) {
       updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
     }
 
-    if (updatedMovement['qty']) {
+    if (updatedMovement['qty'] && updatedMovement['qty'] - parseInt(updatedMovement['qty']) === 0) {
       updatedMovement['qty'] = parseInt(updatedMovement['qty'])
     }
+
+    console.log(updatedMovement);
 
     axios
       .put(`/api/productmovement/${movement_id}`, updatedMovement)

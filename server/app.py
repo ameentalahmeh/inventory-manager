@@ -90,7 +90,6 @@ def routing(resource, id):
                             return jsonify({"error": "There is no stored data"})
 
                     elif request.method == "POST":
-                        print(request.json)
                         vaildationError = requestValidator(
                             resource, 'POST', request.json, None)
                         if vaildationError:
@@ -122,6 +121,8 @@ def routing(resource, id):
                             if dataValidationError:
                                 return dataValidationError
                             else:
+                                if resource == "productmovement" and 'movement_timestamp' not in request.json.keys():
+                                    request.json['movement_timestamp'] = item['movement_timestamp']
                                 return queries.updateItem(resource, request.json, id, connection)
                     else:
                         return jsonify({"error": "The " + request.method + " not allowed for the requested URL !"}), 405

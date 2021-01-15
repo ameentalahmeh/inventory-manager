@@ -166,64 +166,102 @@ def requestValidation(tablename, method, body, item):
 def dataValidation(body, method, report, item, connection):
     dataValidationError = ''
     if body:
-
-        # if method == "PUT" and item and item['movement_timestamp'] and :
         requestBodyFields = list(body.keys())
         invalid_locations = []
-        for rbf in requestBodyFields:
-            if rbf == 'to_location' or rbf == 'from_location':
+        for rbf in ['to_location', 'from_location']:
+            if rbf in requestBodyFields:
                 locations = queries.getAllItems('location', connection)
-                validLocation = [
-                    loc for loc in locations if not bool(str(body[rbf].strip())) or body[rbf] == loc['city']]
+
+                validLocation = [loc for loc in locations if not bool(
+                    str(body[rbf].strip())) or body[rbf] == loc['city']]
+
                 if not validLocation:
                     invalid_locations.append(body[rbf])
-            elif rbf == 'qty':
-                if 'from_location' in requestBodyFields:
-                    from_location_exist_and_not_empty = bool(
-                        str(body['from_location']))
-                    from_location = str(body['from_location'])
-                elif item and 'from_location' in item.keys():
-                    from_location_exist_and_not_empty = bool(
-                        str(item['from_location']))
-                    from_location = str(item['from_location'])
-                else:
-                    from_location_exist_and_not_empty = False
-                    from_location = None
 
-                product_id_exist_and_not_empty = 'product_id' in requestBodyFields and bool(
-                    str(body['product_id']))
-
-                if product_id_exist_and_not_empty:
-                    product = queries.getItemById(
-                        'product', body['product_id'], connection)
-
-                    if product and from_location_exist_and_not_empty:
-                        warehouse = from_location
-                        product_name = product['name']
-                        product_qty = 0
-
-                        relatedReportRow = [
-                            row for row in report if row['product'] == product_name and row['warehouse'] == warehouse]
-
-                        if relatedReportRow and len(relatedReportRow) > 0 and relatedReportRow[0]['qty']:
-                            product_qty = relatedReportRow[0]['qty']
-
-                        if int(product_qty) < int(body['qty']):
-                            dataValidationError = {"error": " The quantity for the product (" + product_name + ") in the (" + warehouse +
-                                                   ") location which (" + str(product_qty) +
-                                                   ") is less than the exporting quantity (" +
-                                                   str(body['qty']) +
-                                                   ") !!"}
         if len(invalid_locations) > 0:
-            dataValidationError = {"error": "Invalid location/s (" + ','.join(list(
-                invalid_locations)) + "). See the valid locations through the (Browsing locations) link !!"}
+            return jsonify({"error": "Invalid location/s (" + ','.join(list(
+                invalid_locations)) + "). See the valid locations through the (Browsing locations) link !!"})
+
+        else:
+            if 'movement_timestamp' in requestBodyFields:
+                movement_date = pd.to_datetime(
+                    body['movement_timestamp'], infer_datetime_format=True)
+                today = pd.to_datetime("today")
+
+                if today > movement_date:
+                    return jsonify(
+                        {"error": "Movement date must be later than today !"})
+
+        if 'qty' in requestBodyFields:
+
+            Warehouse_is_destination = False
+
+            # Get Location
+            if 'from_location' in requestBodyFields:
+                location_exist_and_not_empty = bool(
+                    str(body['from_location']).strip())
+                warehouse = str(body['from_location'])
+            elif item and 'from_location' in item.keys() and item['from_location'] != None:
+                location_exist_and_not_empty = bool(
+                    str(item['from_location']).strip())
+                warehouse = str(item['from_location'])
+            elif 'to_location' in requestBodyFields:
+                location_exist_and_not_empty = bool(
+                    str(body['to_location']).strip())
+                warehouse = str(body['to_location'])
+                Warehouse_is_destination = True
+            elif item and 'to_location' in item.keys() and item['to_location'] != None:
+                location_exist_and_not_empty = bool(
+                    str(item['to_location']).strip())
+                warehouse = str(item['to_location'])
+                Warehouse_is_destination = True
+
+            # Get Product
+            if 'product_id' in requestBodyFields:
+                product_id_exist_and_not_empty = bool(
+                    str(body['product_id']).strip())
+                product_id = str(body['product_id'])
+            elif item and 'product_id' in item.keys():
+                product_id_exist_and_not_empty = bool(
+                    str(item['product_id']).strip())
+                product_id = str(item['product_id'])
+            else:
+                product_id_exist_and_not_empty = False
+                product_id = None
+
+            if product_id_exist_and_not_empty:
+                product = queries.getItemById(
+                    'product', product_id, connection)
+
+                if product and location_exist_and_not_empty:
+                    product_name = product['name']
+                    product_qty = 0
+
+                    relatedReportRow = [
+                        row for row in report if row['product'] == product_name and row['warehouse'] == warehouse]
+
+                    if relatedReportRow and len(relatedReportRow) > 0 and relatedReportRow[0]['qty']:
+                        product_qty = relatedReportRow[0]['qty']
+
+                    # Warehouse is Source
+                    if not Warehouse_is_destination:
+                        if method == "POST":
+                            if body['qty'] > product_qty:
+                                return jsonify({"error": "The quantity for the product (" + product_name + ") in the (" + warehouse +
+                                                ") location which (" + str(product_qty) +
+                                                ") is less than the new movement quantity (" +
+                                                str(body['qty']) +
+                                                ") !!"})
+                        elif method == "PUT":
+                            orginial_qty = item['qty']
+                            if body['qty'] > orginial_qty and body['qty'] - orginial_qty > product_qty:
+                                return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
+
+                    # Warehouse is Destination
+                    else:
+                        if method == "PUT":
+                            orginial_qty = item['qty']
+                            if orginial_qty > body['qty'] and orginial_qty - body['qty'] > product_qty:
+                                return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the decreased quantity !!"})
 
     return dataValidationError
-    #   elif rbf == 'qty':
-    #        try:
-    #             int(body[rbf])
-    #             if int(body[rbf]) <= 0:
-    #                 vaildationError = jsonify(
-    #                     {"error": "Movement quantity must be more than zero !"})
-    #         except:
-    #             inValidFormat.append('qty')

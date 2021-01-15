@@ -39,7 +39,6 @@ const Popup = (props) => {
                         return (
                             <MDBContainer key={idx}>
                                 {
-
                                     <MDBInputGroup
                                         containerClassName="mb-3 flex"
                                         prepend={propLabel}
@@ -48,7 +47,6 @@ const Popup = (props) => {
                                         onChange={(e) => (popupItem[itemPropertiesLabels[propLabel]] = e.target.value)}
                                         value={handlerBtnValue === "Update" && propLabel === "Date" ? changeDate ? undefined : valueDefault : undefined}
                                     />
-
                                 }
 
                                 {
@@ -62,7 +60,7 @@ const Popup = (props) => {
                                         null
                                 }
                                 {
-                                    propLabel === 'Destination' || propLabel == 'City'?
+                                    propLabel === 'Destination' || propLabel === 'City' ?
                                         <MDBLink to='/location' target="_blank" className="BrowseLocationsLink"> Browse locations </MDBLink>
                                         :
                                         null
