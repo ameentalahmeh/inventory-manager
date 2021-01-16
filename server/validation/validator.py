@@ -168,6 +168,8 @@ def dataValidation(body, method, report, item, connection):
     if body:
         requestBodyFields = list(body.keys())
         invalid_locations = []
+        Warehouse_is_destination = False
+
         for rbf in ['to_location', 'from_location']:
             if rbf in requestBodyFields:
                 locations = queries.getAllItems('location', connection)
@@ -192,76 +194,80 @@ def dataValidation(body, method, report, item, connection):
                     return jsonify(
                         {"error": "Movement date must be later than today !"})
 
-        if 'qty' in requestBodyFields:
-
-            Warehouse_is_destination = False
+            print(item)
 
             # Get Location
-            if 'from_location' in requestBodyFields:
-                location_exist_and_not_empty = bool(
-                    str(body['from_location']).strip())
-                warehouse = str(body['from_location'])
-            elif item and 'from_location' in item.keys() and item['from_location'] != None:
-                location_exist_and_not_empty = bool(
-                    str(item['from_location']).strip())
-                warehouse = str(item['from_location'])
-            elif 'to_location' in requestBodyFields:
-                location_exist_and_not_empty = bool(
-                    str(body['to_location']).strip())
-                warehouse = str(body['to_location'])
+            if 'from_location' in requestBodyFields and bool(str(body['from_location']).strip()):
+                warehouse = body['from_location']
+            elif item and 'from_location' in item.keys() and bool(str(item['from_location']).strip()):
+                warehouse = item['from_location']
+            elif 'to_location' in requestBodyFields and bool(str(body['to_location']).strip()):
+                warehouse = body['to_location']
                 Warehouse_is_destination = True
-            elif item and 'to_location' in item.keys() and item['to_location'] != None:
-                location_exist_and_not_empty = bool(
-                    str(item['to_location']).strip())
-                warehouse = str(item['to_location'])
+            elif item and 'to_location' in item.keys() and bool(str(item['to_location']).strip()):
+                warehouse = item['to_location']
                 Warehouse_is_destination = True
 
             # Get Product
-            if 'product_id' in requestBodyFields:
-                product_id_exist_and_not_empty = bool(
-                    str(body['product_id']).strip())
-                product_id = str(body['product_id'])
-            elif item and 'product_id' in item.keys():
-                product_id_exist_and_not_empty = bool(
-                    str(item['product_id']).strip())
-                product_id = str(item['product_id'])
-            else:
-                product_id_exist_and_not_empty = False
-                product_id = None
+            if 'product_id' in requestBodyFields and bool(str(body['product_id']).strip()):
+                product_id = body['product_id']
+            elif item and bool(str(item['product_id']).strip()):
+                product_id = item['product_id']
 
-            if product_id_exist_and_not_empty:
-                product = queries.getItemById(
-                    'product', product_id, connection)
+            # Get Date
+            if 'movement_timestamp' in requestBodyFields:
+                date = pd.to_datetime(
+                    body['movement_timestamp'], infer_datetime_format=True)
+            elif item:
+                date = pd.to_datetime(
+                    item['movement_timestamp'], infer_datetime_format=True)
 
-                if product and location_exist_and_not_empty:
-                    product_name = product['name']
-                    product_qty = 0
+            product = queries.getItemById('product', product_id, connection)
 
-                    relatedReportRow = [
-                        row for row in report if row['product'] == product_name and row['warehouse'] == warehouse]
+            print("line 234:", product , warehouse)
 
-                    if relatedReportRow and len(relatedReportRow) > 0 and relatedReportRow[0]['qty']:
-                        product_qty = relatedReportRow[0]['qty']
 
-                    # Warehouse is Source
-                    if not Warehouse_is_destination:
-                        if method == "POST":
-                            if body['qty'] > product_qty:
-                                return jsonify({"error": "The quantity for the product (" + product_name + ") in the (" + warehouse +
-                                                ") location which (" + str(product_qty) +
-                                                ") is less than the new movement quantity (" +
-                                                str(body['qty']) +
-                                                ") !!"})
-                        elif method == "PUT":
-                            orginial_qty = item['qty']
-                            if body['qty'] > orginial_qty and body['qty'] - orginial_qty > product_qty:
-                                return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
+            if product and warehouse:
+                product_name = product['name']
+                product_qty = 0
+                relatedReportRow = [row for row in report if row['product']
+                                    == product_name and row['warehouse'] == warehouse]
 
-                    # Warehouse is Destination
-                    else:
-                        if method == "PUT":
-                            orginial_qty = item['qty']
-                            if orginial_qty > body['qty'] and orginial_qty - body['qty'] > product_qty:
-                                return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the decreased quantity !!"})
+                if relatedReportRow and len(relatedReportRow) > 0 and relatedReportRow[0]['qty']:
+                    product_qty = relatedReportRow[0]['qty']
+
+                
+                if method == "POST":
+                    if not Warehouse_is_destination and body['qty'] > product_qty:
+                        return jsonify({"error": "The quantity for the product (" + product_name + ") in the (" + warehouse +
+                                        ") location which (" + str(product_qty) +
+                                        ") is less than the new movement quantity (" +
+                                        str(body['qty']) +
+                                        ") !!"})
+
+                elif method == "PUT":
+                    old_movement_qty = item['qty']
+                    new_movement_qty = item['qty']
+
+                    if 'qty' in requestBodyFields:
+                        new_movement_qty = body['qty']
+
+                    print(product_qty)
+
+                    # Source
+                    if not Warehouse_is_destination and product_qty < new_movement_qty - old_movement_qty:
+                        return jsonify({"error": "1"})
+                    elif Warehouse_is_destination and product_qty - old_movement_qty < new_movement_qty:
+                        return jsonify({"error":"2"})
+                        # if (new_movement_qty > product_qty - old_movement_qty):
+                        #     return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
 
     return dataValidationError
+
+# if exported + body['qty'] > imported - original
+# if original + body['qty'] > imported - exported
+# if original + body['qty] > total
+# if body['qty] > total - original
+
+# 7 > 0 - 8
+# 457 > 0 - 458

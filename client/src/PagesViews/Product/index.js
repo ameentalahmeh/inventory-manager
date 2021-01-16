@@ -35,7 +35,8 @@ const Product = () => {
   const [selectedPropertyIdx, setSelectedPropertyIdx] = useState(null);
   const [updatedProductProperty, setUpdatedProductProperty] = useState(null);
 
-  const [newMovment, setNewMovement] = useState({});
+  const [requestMovement, setRequestMovement] = useState({});
+
   const [createMovementModelOpen, setCreateMovementModelOpen] = useState(false);
   const [updateMovementModelOpen, setUpdateMovementModelOpen] = useState(false);
 
@@ -114,7 +115,7 @@ const Product = () => {
   // Movement Functions 
   const addMovement = (createdMovement, product_id) => {
 
-    newMovment['product_id'] = product_id;
+    requestMovement['product_id'] = product_id;
 
     if (createdMovement['movement_timestamp']) {
       createdMovement['movement_timestamp'] = moment(createdMovement['movement_timestamp']).format("YYYY-MM-DD HH:mm:ss")
@@ -126,13 +127,13 @@ const Product = () => {
 
     if (createdMovement) {
       Object.keys(createdMovement).forEach(key => {
-        newMovment[key] = createdMovement[key];
+        requestMovement[key] = createdMovement[key];
       })
-      setNewMovement(newMovment)
+      setRequestMovement(requestMovement)
     }
 
     axios
-      .post(`/api/productmovement`, newMovment)
+      .post(`/api/productmovement`, requestMovement)
       .then((response) => {
         let { data } = response;
         if (data && !data.error) {
@@ -145,7 +146,7 @@ const Product = () => {
               })
           }, '200');
         } else {
-          setRequestFeedback({ "error": data.error })
+          setRequestFeedback({ "error": data.error.replace("qty", 'quantity').replace("movement_timestamp", "date") })
         }
 
       })
@@ -155,7 +156,7 @@ const Product = () => {
   }
 
   const updateMovementProperties = (updatedMovement, movement_id) => {
-    
+
     if (updatedMovement['movement_timestamp']) {
       updatedMovement['movement_timestamp'] = moment(updatedMovement['movement_timestamp']).format('YYYY/MM/DD HH:mm:ss')
     }
@@ -164,10 +165,17 @@ const Product = () => {
       updatedMovement['qty'] = parseInt(updatedMovement['qty'])
     }
 
-    console.log(updatedMovement);
+    if (updatedMovement) {
+      Object.keys(updatedMovement).forEach(key => {
+        requestMovement[key] = updatedMovement[key];
+      })
+      setRequestMovement(requestMovement)
+    }
+
+    console.log(requestMovement);
 
     axios
-      .put(`/api/productmovement/${movement_id}`, updatedMovement)
+      .put(`/api/productmovement/${movement_id}`, requestMovement)
       .then((response) => {
         let { data } = response;
         if (data && !data.error) {
@@ -180,7 +188,7 @@ const Product = () => {
               })
           }, '200');
         } else {
-          setRequestFeedback({ "error": data.error })
+          setRequestFeedback({ "error": data.error.replace("qty", 'quantity').replace("movement_timestamp", "date") })
         }
       })
       .catch((err) => {
@@ -213,6 +221,7 @@ const Product = () => {
 
   const handleMovementEditIconClick = (selectedMovement, Index) => {
     setSelectedMovement(selectedMovement)
+    setRequestMovement({})
     setSelectedMovementIndex(Index)
     setUpdateMovementModelOpen(true)
     setRequestFeedback(null)
@@ -220,7 +229,7 @@ const Product = () => {
 
   const handleMovementCreateClick = () => {
     setSelectedMovement(null)
-    setNewMovement({})
+    setRequestMovement({})
     setCreateMovementModelOpen(true)
     setRequestFeedback(null)
   }
