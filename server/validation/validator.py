@@ -246,18 +246,18 @@ def dataValidation(body, method, report, item, connection):
                     if 'qty' in requestBodyFields:
                         new_movement_qty = body['qty']
 
-                    print(new_movement_qty, old_movement_qty, product_qty, Warehouse_is_destination)
+                    print(new_movement_qty, old_movement_qty,
+                          product_qty, Warehouse_is_destination)
 
                     # Source
                     if not Warehouse_is_destination:
-                        if new_movement_qty > old_movement_qty and new_movement_qty < product_qty - old_movement_qty:
+                        if (old_movement_qty > product_qty) or (new_movement_qty > old_movement_qty and new_movement_qty - old_movement_qty > product_qty):
                             return jsonify({"error": "1"})
- 
+
                     # Destination
                     else:
                         if new_movement_qty < old_movement_qty and old_movement_qty - new_movement_qty > product_qty:
                             return jsonify({"error": "2"})
-              
 
     return dataValidationError
 
@@ -268,8 +268,8 @@ def dataValidation(body, method, report, item, connection):
 # if original + body['qty'] > imported - exported
 # if original + body['qty'] > total
 # if body['qty'] > total - original
-                       # elif new_movement_qty > product_qty - old_movement_qty:
-                        #     return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
+    # elif new_movement_qty > product_qty - old_movement_qty:
+    #     return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
 
-        #   elif new_movement_qty < product_qty - old_movement_qty:
-        #                     return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
+    #   elif new_movement_qty < product_qty - old_movement_qty:
+    #                     return jsonify({"error": "Not allowed updating because the quantity for the product (" + product_name + ") in the (" + warehouse + ") location less than the increased quantity !!"})
