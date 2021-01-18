@@ -32,11 +32,24 @@ Web app based on React and Flask
  ## Product view
   - Products page
   
-  - Add product
+  ![Products page](https://i.imgur.com/y3IRIN6.png)
+  
+  - Create product
+  
+  ![ِCreate product](https://i.imgur.com/HHD4hg1.png)
+  
   - Edit product
   
+  ![ِEdit product](https://i.imgur.com/bbqMxE1.png)
+  
+  
   - Add movement
+  
+  ![ِCreate movement](https://i.imgur.com/bIUB5Ng.png)
+  
   - Edit movement
+  
+  ![ِEdit movement](https://i.imgur.com/aCNaXym.png)
  
  ## Location view
   - Locations page
