@@ -25,7 +25,7 @@ Web app based on React and Flask
 
 # Screenshots
   ## Home view
-  - ![Home page](blob:https://web.whatsapp.com/076fbf14-d6db-410a-bec0-32fc6645d550)
+  - ![Home page](https://i.ibb.co/qBDPXhh/Whats-App-Image-2021-01-19-at-1-11-11-AM.jpg)
   
  ## Product view
   - Products page
