@@ -1,10 +1,9 @@
 # Description
-
-  ERPMax is a web app based on React and Flask, which is a shop management application that enables the user to manage the inventory of a list of products in the respective   warehouses. 
+  ERPMax is a web app based on React and Flask, which is an inventory management application that enables the user to manage the inventory of a list of products in the respective warehouses. 
 
 # Functionality
  - Get/ Create/ Edit products, locations, and products movements.
- - Create and view products report.
+ - View product balance report for each location.
  - Request and data validation.
  
 # Used Technologies
@@ -14,15 +13,15 @@
 
 # How to run project
  - Open your terminal.
- - Clone the project repo via command `git clone https://github.com/ameentalahmeh/erpmax-test.git`, then `cd erpmax-test`.
+ - Clone the project repo via `git clone https://github.com/ameentalahmeh/erpmax-test.git` command, then `cd erpmax-test`.
  - Create your MySQL database.
-    - Note: You can used the pushed `products_store_db.sql` file to design your database tables.
+    - Note: You can use the pushed `products_store_db.sql` file to prepare your database tables.
  - Configure your database to connect with the Flask API through editing `yaml.db` file, and update enviroment variables with your database details.
  - Running the project:
-    1. Go to `client` folder via command `cd client`
-    2. Install all used node modules via command `npm install`.
-    3. Run project via `npm run dev`.
-  - Website running, Enjoy :) 
+    1. Go to `client` folder using `cd client` command.
+    2. Install all used node modules via `npm install` command.
+    3. Run the project using `npm run dev`.
+  - Website is running, Enjoy :) 
 
 # Screenshots
  ## Home view
