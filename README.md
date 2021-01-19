@@ -1,6 +1,8 @@
 # Description
-Web app based on React and Flask
- 
+
+  ERPMax is a web app based on React and Flask, which is a shop management application that enables the user to manage the inventory of a list of products in the respective    
+  warehouses. 
+
 # Functionality
  - Get/ Create/ Edit products, locations, and products movements.
  - Create and view products report.
