@@ -171,6 +171,7 @@ def dataValidation(body, method, report, item, connection):
         Warehouse_is_destination = False
         Warehouse_is_source = False
         switch_dest_with_source = False
+        switch_source_with_dest = False
 
         for rbf in ['to_location', 'from_location']:
             if rbf in requestBodyFields:
@@ -201,11 +202,18 @@ def dataValidation(body, method, report, item, connection):
                 warehouse = body['from_location']
                 if item and item['to_location'] == warehouse:
                     switch_dest_with_source = True
+                else:
+                    Warehouse_is_source = True
             elif item and bool(str(item['from_location']).strip()) and item['from_location'] != None:
                 warehouse = item['from_location']
-                Warehouse_is_source = True
+                if item['to_location'] and item['from_location'] != item['to_location']:
+                    Warehouse_is_source = True
             elif 'to_location' in requestBodyFields and bool(str(body['to_location']).strip()):
                 warehouse = body['to_location']
+                if item and item['from_location'] == warehouse:
+                    switch_source_with_dest = True
+                else:
+                    Warehouse_is_destination = True
             elif item and bool(str(item['to_location']).strip()) and item['to_location'] != None:
                 warehouse = item['to_location']
                 Warehouse_is_destination = True
@@ -216,19 +224,12 @@ def dataValidation(body, method, report, item, connection):
             elif item and bool(str(item['product_id']).strip()):
                 product_id = item['product_id']
 
-            # Get Date
-            if 'movement_timestamp' in requestBodyFields:
-                date = pd.to_datetime(
-                    body['movement_timestamp'], infer_datetime_format=True)
-            elif item:
-                date = pd.to_datetime(
-                    item['movement_timestamp'], infer_datetime_format=True)
-
             product = queries.getItemById('product', product_id, connection)
 
             if product and warehouse:
                 product_name = product['name']
                 product_qty = 0
+
                 relatedReportRow = [row for row in report if row['product']
                                     == product_name and row['warehouse'] == warehouse]
 
@@ -236,9 +237,9 @@ def dataValidation(body, method, report, item, connection):
                     product_qty = relatedReportRow[0]['qty']
 
                 if method == "POST":
-                    if not Warehouse_is_destination and body['qty'] > product_qty:
-                        return jsonify({"error": "The quantity for the product (" + product_name + ") in the (" + warehouse +
-                                        ") location which is (" + str(product_qty) +
+                    if Warehouse_is_source and (product_qty == 0 or body['qty'] > product_qty):
+                        return jsonify({"error": "The quantity for the " + product_name + " product in the " + warehouse +
+                                        " location which is (" + str(product_qty) +
                                         ") is less than the new movement quantity (" +
                                         str(body['qty']) +
                                         ") !!"})
@@ -250,11 +251,13 @@ def dataValidation(body, method, report, item, connection):
                     if 'qty' in requestBodyFields:
                         new_movement_qty = body['qty']
 
-                    if Warehouse_is_source and product_qty < new_movement_qty - old_movement_qty:
-                        return jsonify({"error": "The existing quantity of this product in " + warehouse + " is less than this quantity."})
-                    elif Warehouse_is_destination and product_qty < old_movement_qty - new_movement_qty:
-                        return jsonify({"error": "Please update the export movements before making this change."})
+                    if Warehouse_is_source and not switch_dest_with_source and not switch_source_with_dest and product_qty < new_movement_qty - old_movement_qty:
+                        return jsonify({"error": "The existing quantity of the " + product_name + " product in " + warehouse + " location is less than movement’s quantity."})
+                    elif Warehouse_is_destination and not switch_source_with_dest and product_qty < old_movement_qty - new_movement_qty:
+                        return jsonify({"error": "This update will make the imported quantity of the " + product_name + " product at " + warehouse + " location less than the exported one."})
                     elif switch_dest_with_source and product_qty < new_movement_qty + old_movement_qty:
-                        return jsonify({"error": "This update on locations will make the exporting quantity more than the importing one."})
+                        return jsonify({"error": "This update on locations will make the exported quantity of the " + product_name + " product at " + warehouse + " location more than the imported one."})
+                    elif switch_source_with_dest and product_qty < - new_movement_qty - old_movement_qty:
+                        return jsonify({"error": "This update on locations will make the imported quantity of the " + product_name + " product at " + warehouse + " location less than the exported one."})
 
     return dataValidationError
