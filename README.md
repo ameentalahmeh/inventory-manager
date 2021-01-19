@@ -53,9 +53,26 @@ Web app based on React and Flask
  
  ## Location view
   - Locations page
-  - Add location
+  
+  ![Locations page](https://i.imgur.com/UabvRYy.png)
+  
+  - Create location
+  
+  ![ِCreate product](https://i.imgur.com/HHD4hg1.png)
+  
   - Edit location
+  
+  ![ِEdit product](https://i.imgur.com/Yvu2aGR.png)
   
   ## Report view
   - Report page
+  
+  ## Validation
+  - No enough products at location
+  
+  ![No enough products](https://i.imgur.com/1iHo9Ps.png)
+  
+  - No changes made
+  
+  ![No changes made](https://i.imgur.com/IHsBrjY.png)
   
