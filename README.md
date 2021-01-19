@@ -25,7 +25,7 @@
   - Website running, Enjoy :) 
 
 # Screenshots
-  ## Home view
+ ## Home view
   - Home page
   
   ![Home page](https://i.ibb.co/qBDPXhh/Whats-App-Image-2021-01-19-at-1-11-11-AM.jpg)
@@ -65,10 +65,12 @@
   
   ![ِEdit product](https://i.imgur.com/Yvu2aGR.png)
   
-  ## Report view
+ ## Report view
   - Report page
   
-  ## Validation
+  ![Report page](https://i.imgur.com/urWvngT.png)
+  
+ ## Validation
   - No enough products at location
   
   ![No enough products](https://i.imgur.com/1iHo9Ps.png)
@@ -77,12 +79,12 @@
   
   ![No changes made](https://i.imgur.com/IHsBrjY.png)
   
-  - Required Inputs are empty
+  - Required inputs are empty
   
   ![Required Inputs are empty](https://i.imgur.com/0ggKWfI.png)
 
   - Inputs with invalid formats
   
   ![Inputs with invalid format](https://i.imgur.com/SqhobLT.png)
-
+  
   
