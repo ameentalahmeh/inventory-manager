@@ -24,7 +24,6 @@ def addNewItem(tablename, itemDetails, itemsCount, connection):
         return jsonify({'message': 'The ' + recordTag + ' has been added !!'}), 200,
 
     except Exception as e:
-        print(str(e))
         return jsonify({'error': str(e)})
 
 
@@ -47,7 +46,6 @@ def updateItem(tablename, itemDetails, id, connection):
         connection.commit()
         return jsonify({'message': 'The ' + recordTag + ' has been updated !!'}), 200
     except Exception as e:
-        print(e)
         return jsonify({'error': str(e)})
 
 
@@ -58,7 +56,6 @@ def getAllItems(tablename, connection):
         items = cur.execute(getAllItemsQuery)
         return cur.fetchall()
     except Exception as e:
-        print(e)
         return jsonify({'error': str(e)})
 
 

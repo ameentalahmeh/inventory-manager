@@ -25,7 +25,6 @@ const Report = () => {
             getReport()
                 .then((fetchedReport) => {
                     let { data } = fetchedReport && fetchedReport.data && fetchedReport.data;
-                    console.log(data);
                     setReport(data)
                 })
         } catch (error) {

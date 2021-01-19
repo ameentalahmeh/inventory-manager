@@ -172,8 +172,6 @@ const Product = () => {
       setRequestMovement(requestMovement)
     }
 
-    console.log(requestMovement);
-
     axios
       .put(`/api/productmovement/${movement_id}`, requestMovement)
       .then((response) => {
