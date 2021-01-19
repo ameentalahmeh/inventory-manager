@@ -76,3 +76,12 @@ Web app based on React and Flask
   
   ![No changes made](https://i.imgur.com/IHsBrjY.png)
   
+  - Required Inputs are empty
+  
+  ![Required Inputs are empty](https://i.imgur.com/0ggKWfI.png)
+
+  - Inputs with invalid formats
+  
+  ![Inputs with invalid format](https://i.imgur.com/SqhobLT.png)
+
+  
