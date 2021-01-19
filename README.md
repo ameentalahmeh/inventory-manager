@@ -7,7 +7,7 @@
  - Request and data validation.
  
 # Used Technologies
- - **Frontend:** ReactJs, HTML, CSS.
+ - **Frontend:** ReactJs, Material Design for Bootstrap, HTML, CSS.
  - **Backend:** Python (Flask).
  - **DB:** MySQL.
 
