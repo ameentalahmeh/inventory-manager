@@ -199,14 +199,14 @@ def dataValidation(body, method, report, item, connection):
             # Get Location
             if 'from_location' in requestBodyFields and bool(str(body['from_location']).strip()):
                 warehouse = body['from_location']
-                if item['to_location'] == warehouse:
+                if item and item['to_location'] == warehouse:
                     switch_dest_with_source = True
-            elif item and 'from_location' in item.keys() and bool(str(item['from_location']).strip()) and item['from_location'] != None:
+            elif item and bool(str(item['from_location']).strip()) and item['from_location'] != None:
                 warehouse = item['from_location']
                 Warehouse_is_source = True
             elif 'to_location' in requestBodyFields and bool(str(body['to_location']).strip()):
                 warehouse = body['to_location']
-            elif item and 'to_location' in item.keys() and bool(str(item['to_location']).strip()) and item['to_location'] != None:
+            elif item and bool(str(item['to_location']).strip()) and item['to_location'] != None:
                 warehouse = item['to_location']
                 Warehouse_is_destination = True
 
@@ -238,7 +238,7 @@ def dataValidation(body, method, report, item, connection):
                 if method == "POST":
                     if not Warehouse_is_destination and body['qty'] > product_qty:
                         return jsonify({"error": "The quantity for the product (" + product_name + ") in the (" + warehouse +
-                                        ") location which (" + str(product_qty) +
+                                        ") location which is (" + str(product_qty) +
                                         ") is less than the new movement quantity (" +
                                         str(body['qty']) +
                                         ") !!"})
@@ -256,6 +256,5 @@ def dataValidation(body, method, report, item, connection):
                         return jsonify({"error": "Please update the export movements before making this change."})
                     elif switch_dest_with_source and product_qty < new_movement_qty + old_movement_qty:
                         return jsonify({"error": "This update on locations will make the exporting quantity more than the importing one."})
-                  
-    return dataValidationError
 
+    return dataValidationError
