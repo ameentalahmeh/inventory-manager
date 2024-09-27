@@ -104,7 +104,7 @@ cd inventory-manager
 
 ## Step 4: Running the Backend (Flask API)
 
-1. Ensure you're still inside the virtual environment (`.venv`), and run the following command to start the Flask server:
+1. Run the following command to start the Flask server:
    
    ```bash
    cd server
