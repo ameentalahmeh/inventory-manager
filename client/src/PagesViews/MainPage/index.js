@@ -12,9 +12,9 @@ const MainPage = (props) => {
             <MDBView src={headerImage}>
                 <MDBMask overlay="black-light" className="flex-center flex-column text-white text-center">
                     <div className="DetailsDiv">
-                        <h2>ERPMax</h2>
+                        <h2>Inventory Manager</h2>
                         <h5>Shop Management Application</h5>
-                        <p>ERPMax enables you to manage inventory of a list of products in the respective warehouses  </p>
+                        <p>Inventory Manager enables you to manage inventory of a list of products in the respective warehouses  </p>
                     </div>
                     <div>
                         <MDBBtn onClick={() => history.push("/product")} color="blue">Products</MDBBtn>

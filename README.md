@@ -1,5 +1,5 @@
 # Description
-  ERPMax is a web app based on React and Flask, which is an inventory management application that enables the user to manage the inventory of a list of products in the respective warehouses. 
+  A web app based on React and Flask, which is an inventory management application that enables the user to manage the inventory of a list of products in the respective warehouses. 
 
 # Functionality
  - Get/ Create/ Edit products, locations, and products movements.
@@ -13,7 +13,7 @@
 
 # How to run project
  - Open your terminal.
- - Clone the project repo via `git clone https://github.com/ameentalahmeh/erpmax-test.git` command, then `cd erpmax-test`.
+ - Clone the project repo via `git clone https://github.com/ameentalahmeh/inventory-manager.git` command, then `cd inventory-manager`.
  - Create your MySQL database.
     - Note: You can use the pushed `products_store_db.sql` file to prepare your database tables.
  - Configure your database to connect with the Flask API through editing `yaml.db` file, and update enviroment variables with your database details.
@@ -27,63 +27,63 @@
  ## Home view
   - Home page
   
-  ![Home page](https://i.ibb.co/qBDPXhh/Whats-App-Image-2021-01-19-at-1-11-11-AM.jpg)
+  ![Home page](assets/images/home.jpg)
   
  ## Product view
   - Products page
   
-  ![Products page](https://i.imgur.com/y3IRIN6.png)
+  ![Products page](assets/images/products.png)
   
   - Create product
   
-  ![ِCreate product](https://i.imgur.com/HHD4hg1.png)
+  ![ِCreate product](assets/images/create-product.png)
   
   - Edit product
   
-  ![ِEdit product](https://i.imgur.com/bbqMxE1.png)
+  ![ِEdit product](assets/images/edit-product.png)
   
   
   - Add movement
   
-  ![ِCreate movement](https://i.imgur.com/bIUB5Ng.png)
+  ![ِCreate movement](assets/images/create-movement.png)
   
   - Edit movement
   
-  ![ِEdit movement](https://i.imgur.com/aCNaXym.png)
+  ![ِEdit movement](assets/images/edit-movement.png)
  
  ## Location view
   - Locations page
   
-  ![Locations page](https://i.imgur.com/UabvRYy.png)
+  ![Locations page](assets/images/locations.png)
   
   - Create location
   
-  ![ِCreate product](https://i.imgur.com/HHD4hg1.png)
+  ![ِCreate location]()
   
   - Edit location
   
-  ![ِEdit product](https://i.imgur.com/Yvu2aGR.png)
+  ![ِEdit location](assets/images/edit-location.png)
   
  ## Report view
   - Report page
   
-  ![Report page](https://i.imgur.com/urWvngT.png)
+  ![Report page](assets/images/report-page.png)
   
  ## Validation
   - No enough products at location
   
-  ![No enough products](https://i.imgur.com/1iHo9Ps.png)
+  ![No enough products](assets/images/validation-1.png)
   
   - No changes made
   
-  ![No changes made](https://i.imgur.com/IHsBrjY.png)
+  ![No changes made](assets/images/validation-2.png)
   
   - Required inputs are empty
   
-  ![Required Inputs are empty](https://i.imgur.com/0ggKWfI.png)
+  ![Required Inputs are empty](assets/images/validation-3.png)
 
   - Inputs with invalid formats
   
-  ![Inputs with invalid format](https://i.imgur.com/SqhobLT.png)
+  ![Inputs with invalid format](assets/images/invalid-formats.png)
   
   

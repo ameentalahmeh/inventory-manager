@@ -7,7 +7,7 @@ const NavBar = (props) => {
     return (
         <MDBNavbar color="blue" dark expand="md">
             <MDBNavbarBrand href="/">
-                <MDBIcon inverse fixed icon="store" /> <strong className="white-text">ERPMax</strong>
+                <MDBIcon inverse fixed icon="store" /> <strong className="white-text">Inventory Manager</strong>
             </MDBNavbarBrand>
             <MDBNavbarNav left>
                 <MDBNavItem active={activeKey === "1"}>
