@@ -5,8 +5,6 @@ from validation.validator import dataValidation as dataValidator
 from flask import Flask, request, jsonify
 import sys
 import yaml
-import pandas as pd
-import datetime
 
 # import custom functions
 sys.path.append("/server")

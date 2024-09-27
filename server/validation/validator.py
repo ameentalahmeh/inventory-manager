@@ -1,7 +1,6 @@
 import database.queries as queries
 from flask import jsonify
 import pandas as pd
-import datetime
 import sys
 from dateutil.parser import parse
 
